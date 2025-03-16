@@ -1,0 +1,55 @@
+# Hertz HTTP Server Configuration
+hertz:
+  address: ":5050"
+  service: "core"
+  enable_pprof: true
+  enable_gzip: true
+  enable_access_log: true
+  log_level: "info"
+  otlp_address: "localhost:4317"
+
+# Service Registry Configuration
+registry:
+  registry_address:
+    - "localhost:2379"
+  username: ""
+  password: ""
+
+# MySQL Database Configuration
+mysql:
+  host: "localhost"
+  port: "3306"
+  username: "root"
+  password: "password"
+
+# Redis Configuration
+redis:
+  address: "localhost:6379"
+  password: ""
+  username: ""
+  db: 0
+
+
+oss:
+  access_key_id: ""
+  access_key_secret: ""
+  role_arn_for_oss_upload: ""
+  bucket: ""
+  region_id: ""
+
+wx:
+  app_id: ""
+  app_secret: ""
+
+
+jwt:
+  secret: ""
+  # 有效时间(Day)
+  valid_days: 30
+
+log:
+  path: "./logs/app.log"
+  max_size: 50
+  max_backups: 5
+  max_age: 30
+  compress: true

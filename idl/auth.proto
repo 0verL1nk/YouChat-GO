@@ -1,0 +1,45 @@
+// auth.proto
+syntax = "proto3";
+
+package auth;
+
+
+
+import "api.proto";
+
+
+
+message RegisterReq {
+   string email=1[(api.body)="email"];
+   string password=2[(api.body)="password"];
+   string checkCode=3[(api.body)="check_code"];
+   string nickName=4[(api.body)="nick_name"];
+   string checkCodeKey=5[(api.body)="check_code_key"];
+}
+
+message RegisterResp{
+   
+}
+
+
+message  CheckCode {
+   string checkCode=1[(api.body)="check_code"];
+   string checkCodeKey=2[(api.body)="check_code_key"];
+}
+
+message GetCheckCodeReq {
+}
+
+message GetCheckCodeResp {
+   int32 code = 1 [(api.body)="code"];
+   string info = 2[(api.body)="info"];
+   CheckCode data=3[(api.body)="data"];
+
+}
+
+service GetCheckCodeService {
+   rpc GetCheckCode(GetCheckCodeReq) returns(GetCheckCodeResp) {
+      option (api.post) = "/checkCode";
+   }
+   rpc 
+}
