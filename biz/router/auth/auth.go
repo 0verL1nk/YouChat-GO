@@ -18,4 +18,6 @@ func Register(r *server.Hertz) {
 
 	root := r.Group("/", rootMw()...)
 	root.POST("/checkCode", append(_getcheckcodeMw(), auth.GetCheckCode)...)
+	root.POST("/login", append(_loginMw(), auth.Login)...)
+	root.POST("/register", append(_registerMw(), auth.Register)...)
 }

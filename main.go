@@ -12,6 +12,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/cloudwego/hertz/pkg/common/utils"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/hertz-contrib/cors"
@@ -29,7 +30,9 @@ func main() {
 	h := server.New(server.WithHostPorts(address))
 
 	// Init redis
-	redis.Init()
+	if err := redis.Init(); err != nil {
+		hlog.Fatal("init redis failed", err)
+	}
 	registerMiddleware(h)
 
 	// add a ping route to test

@@ -18,28 +18,42 @@ message RegisterReq {
 }
 
 message RegisterResp{
-   
+   string info=1[(api.body)="info"];
 }
 
+message LoginReq{
+   string email=1[(api.body)="email"];
+   string password=2[(api.body)="password"];
+   string checkCode=3[(api.body)="check_code"];
+   string nickName=4[(api.body)="nick_name"];
+   string checkCodeKey=5[(api.body)="check_code_key"];
+}
 
-message  CheckCode {
-   string checkCode=1[(api.body)="check_code"];
-   string checkCodeKey=2[(api.body)="check_code_key"];
+message LoginResp {
+   string info=1[(api.body)="info"];
+   string token = 2[(api.body)="token"];
+   string userId=3[(api.body)="user_id"];
+   string nickName=4[(api.body)="nick_name"];
+   bool admin = 5[(api.body)="admin"];
 }
 
 message GetCheckCodeReq {
 }
 
 message GetCheckCodeResp {
-   int32 code = 1 [(api.body)="code"];
-   string info = 2[(api.body)="info"];
-   CheckCode data=3[(api.body)="data"];
-
+   string info = 1[(api.body)="info"];
+   string checkCode=2[(api.body)="check_code"];
+   string checkCodeKey=3[(api.body)="check_code_key"];
 }
 
-service GetCheckCodeService {
+service AuthService {
    rpc GetCheckCode(GetCheckCodeReq) returns(GetCheckCodeResp) {
       option (api.post) = "/checkCode";
    }
-   rpc 
+   rpc Register(RegisterReq) returns(RegisterResp) {
+      option (api.post) = "/register";
+   }
+   rpc Login(LoginReq) returns(LoginResp) {
+      option (api.post) = "/login";
+   }
 }

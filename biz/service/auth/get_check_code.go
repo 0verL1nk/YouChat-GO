@@ -10,8 +10,6 @@ import (
 	"github.com/mojocn/base64Captcha"
 )
 
-var rsStore *redis.RedisStore
-
 type GetCheckCodeService struct {
 	RequestContext *app.RequestContext
 	Context        context.Context
@@ -34,13 +32,14 @@ func (h *GetCheckCodeService) Run(req *auth.GetCheckCodeReq) (resp *auth.GetChec
 		return
 	}
 	// Set data
-	rsStore.Set(id, ans)
-	var data auth.CheckCode
-	data.CheckCode = b64s
-	data.CheckCodeKey = id
-	resp = &auth.GetCheckCodeResp{}
-	resp.Data = &data
-	resp.Code = 200
-	resp.Info = "Success"
+	if err = redis.RedisSet(h.Context, id, ans); err != nil {
+		hlog.Error("set checkCode failed:", err)
+		return
+	}
+	resp = &auth.GetCheckCodeResp{
+		Info:         "Success",
+		CheckCode:    b64s,
+		CheckCodeKey: id,
+	}
 	return
 }

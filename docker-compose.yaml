@@ -1,5 +1,11 @@
 version: '3'
 services:
+  youchat:
+    build: .
+    ports:
+      - 5050:5050
+    environment:
+      - APP_HERTZ_ADDRESS= ":5050"
   mysql:
     image: 'mysql:latest'
     ports:
