@@ -7,9 +7,9 @@ import (
 )
 
 type ErrResponse struct {
-	Success  bool
-	Code     int
-	ErrorMsg string
+	Success  bool   `json:"success"`
+	Code     int    `json:"code"`
+	ErrorMsg string `json:"error_msg"`
 }
 
 // SendErrResponse  pack error response

@@ -2,9 +2,21 @@ package auth
 
 import (
 	"context"
+	"errors"
 
+	"core/biz/jwt"
+	"core/biz/utils"
 	auth "core/hertz_gen/auth"
+
+	"fmt"
+
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
+)
+
+var (
+	ErrCreateToken = errors.New("create token failed")
+	ErrValidatePwd = errors.New("账号或密码错误")
 )
 
 type LoginService struct {
@@ -22,5 +34,24 @@ func (h *LoginService) Run(req *auth.LoginReq) (resp *auth.LoginResp, err error)
 	// hlog.CtxInfof(h.Context, "resp = %+v", resp)
 	//}()
 	// todo edit your code
-	return
+	user, err := CheckUserState(h.Context, req.Email)
+	if err != nil {
+		return &auth.LoginResp{}, err
+	}
+	err = utils.ComparePasswords(user.Password, req.Password)
+	if err != nil {
+		return &auth.LoginResp{}, ErrValidatePwd
+	}
+	token, err := jwt.CreateToken(h.Context, user.UserId)
+	if err != nil {
+		hlog.Error("create token failed:", err)
+		return &auth.LoginResp{}, ErrCreateToken
+	}
+	return &auth.LoginResp{
+		Info:     "Success",
+		Token:    token,
+		UserId:   fmt.Sprint(user.UserId),
+		NickName: user.Name,
+		Admin:    user.IsAdmin,
+	}, nil
 }

@@ -4,7 +4,9 @@ package main
 
 import (
 	"context"
-	"core/biz/dal/redis"
+	"core/biz/dal"
+	"core/biz/dal/mysql"
+	"core/biz/dal/query"
 	"core/biz/logger"
 	"core/biz/router"
 	"core/conf"
@@ -12,7 +14,6 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
-	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/cloudwego/hertz/pkg/common/utils"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/hertz-contrib/cors"
@@ -23,16 +24,12 @@ import (
 
 func main() {
 	// use `go run cmd/gorm/main.go` to migrate the database
-	// dal.Init()
+	dal.Init()
 	// use `go run cmd/gorm_gen/main.go` to generate the code
-	// query.SetDefault(mysql.DB)
+	query.SetDefault(mysql.DB)
 	address := conf.GetConf().Hertz.Address
 	h := server.New(server.WithHostPorts(address))
 
-	// Init redis
-	if err := redis.Init(); err != nil {
-		hlog.Fatal("init redis failed", err)
-	}
 	registerMiddleware(h)
 
 	// add a ping route to test
@@ -72,4 +69,7 @@ func registerMiddleware(h *server.Hertz) {
 
 	// cores
 	h.Use(cors.Default())
+
+	// jwt
+
 }

@@ -10,7 +10,7 @@ import (
 
 var RedisClient *redis.Client
 
-func Init() (err error) {
+func Init() {
 	RedisClient = redis.NewClient(&redis.Options{
 		Addr:     conf.GetConf().Redis.Address,
 		Username: conf.GetConf().Redis.Username,
@@ -18,7 +18,6 @@ func Init() (err error) {
 		DB:       conf.GetConf().Redis.DB,
 	})
 	if err := RedisClient.Ping(context.Background()).Err(); err != nil {
-		return err
+		panic(err)
 	}
-	return
 }

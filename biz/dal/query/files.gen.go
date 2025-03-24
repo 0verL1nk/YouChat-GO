@@ -176,17 +176,17 @@ type IFileDo interface {
 	UnderlyingDB() *gorm.DB
 	schema.Tabler
 
-	GetUserInfoByUserId(userId string) (result *model.User, err error)
-	GetUserInfoByOpenId(openId string) (result *model.User, err error)
+	GetUserInfoByUserId(userId uint64) (result *model.User, err error)
+	GetUserInfoByEmail(email string) (result *model.User, err error)
 }
 
-// SELECT * FROM @@table WHERE user_id = @userId WHERE is_deleted is not true
-func (f fileDo) GetUserInfoByUserId(userId string) (result *model.User, err error) {
+// SELECT * FROM @@table WHERE user_id = @userId AND is_deleted is not true
+func (f fileDo) GetUserInfoByUserId(userId uint64) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, userId)
-	generateSQL.WriteString("SELECT * FROM files WHERE user_id = ? WHERE is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM files WHERE user_id = ? AND is_deleted is not true ")
 
 	var executeSQL *gorm.DB
 	executeSQL = f.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
@@ -195,13 +195,13 @@ func (f fileDo) GetUserInfoByUserId(userId string) (result *model.User, err erro
 	return
 }
 
-// SELECT * FROM @@table WHERE open_id = @openId WHERE is_deleted is not true
-func (f fileDo) GetUserInfoByOpenId(openId string) (result *model.User, err error) {
+// SELECT * FROM @@table WHERE email = @email AND is_deleted is not true
+func (f fileDo) GetUserInfoByEmail(email string) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
-	params = append(params, openId)
-	generateSQL.WriteString("SELECT * FROM files WHERE open_id = ? WHERE is_deleted is not true ")
+	params = append(params, email)
+	generateSQL.WriteString("SELECT * FROM files WHERE email = ? AND is_deleted is not true ")
 
 	var executeSQL *gorm.DB
 	executeSQL = f.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert

@@ -44,9 +44,9 @@ type Querier interface {
 	// CreateUser(user *User) error
 	// ListUsers() ([]*User, error)
 
-	// SELECT * FROM @@table WHERE user_id = @userId WHERE is_deleted is not true
-	GetUserInfoByUserId(userId string) (*User, error)
+	// SELECT * FROM @@table WHERE user_id = @userId AND is_deleted is not true
+	GetUserInfoByUserId(userId uint64) (*User, error)
 
-	// SELECT * FROM @@table WHERE open_id = @openId WHERE is_deleted is not true
-	GetUserInfoByOpenId(openId string) (*User, error)
+	// SELECT * FROM @@table WHERE email = @email AND is_deleted is not true
+	GetUserInfoByEmail(email string) (*User, error)
 }
