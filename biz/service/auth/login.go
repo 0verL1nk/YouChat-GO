@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"core/biz/dal/redis"
 	"core/biz/jwt"
 	"core/biz/utils"
 	auth "core/hertz_gen/auth"
@@ -34,6 +35,10 @@ func (h *LoginService) Run(req *auth.LoginReq) (resp *auth.LoginResp, err error)
 	// hlog.CtxInfof(h.Context, "resp = %+v", resp)
 	//}()
 	// todo edit your code
+	// 验证码校验
+	if !redis.RedisVerify(h.Context, req.CheckCodeKey, req.CheckCode, true) {
+		return &auth.LoginResp{}, errors.New("验证码错误")
+	}
 	user, err := CheckUserState(h.Context, req.Email)
 	if err != nil {
 		return &auth.LoginResp{}, err

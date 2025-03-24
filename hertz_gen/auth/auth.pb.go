@@ -28,11 +28,11 @@ type RegisterReq struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email        string `protobuf:"bytes,1,opt,name=email,proto3" form:"email" json:"email,omitempty"`
-	Password     string `protobuf:"bytes,2,opt,name=password,proto3" form:"password" json:"password,omitempty"`
-	CheckCode    string `protobuf:"bytes,3,opt,name=checkCode,proto3" form:"check_code" json:"check_code,omitempty"`
-	NickName     string `protobuf:"bytes,4,opt,name=nickName,proto3" form:"nick_name" json:"nick_name,omitempty"`
-	CheckCodeKey string `protobuf:"bytes,5,opt,name=checkCodeKey,proto3" form:"check_code_key" json:"check_code_key,omitempty"`
+	Email        string `protobuf:"bytes,1,opt,name=email,proto3" form:"email" json:"email"`
+	Password     string `protobuf:"bytes,2,opt,name=password,proto3" form:"password" json:"password"`
+	CheckCode    string `protobuf:"bytes,3,opt,name=checkCode,proto3" form:"check_code" json:"check_code"`
+	NickName     string `protobuf:"bytes,4,opt,name=nickName,proto3" form:"nick_name" json:"nick_name"`
+	CheckCodeKey string `protobuf:"bytes,5,opt,name=checkCodeKey,proto3" form:"check_code_key" json:"check_code_key"`
 }
 
 func (x *RegisterReq) Reset() {
@@ -107,7 +107,7 @@ type RegisterResp struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Info string `protobuf:"bytes,1,opt,name=info,proto3" form:"info" json:"info,omitempty"`
+	Info string `protobuf:"bytes,1,opt,name=info,proto3" form:"info" json:"info"`
 }
 
 func (x *RegisterResp) Reset() {
@@ -154,11 +154,11 @@ type LoginReq struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Email        string `protobuf:"bytes,1,opt,name=email,proto3" form:"email" json:"email,omitempty"`
-	Password     string `protobuf:"bytes,2,opt,name=password,proto3" form:"password" json:"password,omitempty"`
-	CheckCode    string `protobuf:"bytes,3,opt,name=checkCode,proto3" form:"check_code" json:"check_code,omitempty"`
-	NickName     string `protobuf:"bytes,4,opt,name=nickName,proto3" form:"nick_name" json:"nick_name,omitempty"`
-	CheckCodeKey string `protobuf:"bytes,5,opt,name=checkCodeKey,proto3" form:"check_code_key" json:"check_code_key,omitempty"`
+	Email        string `protobuf:"bytes,1,opt,name=email,proto3" form:"email" json:"email"`
+	Password     string `protobuf:"bytes,2,opt,name=password,proto3" form:"password" json:"password"`
+	CheckCode    string `protobuf:"bytes,3,opt,name=checkCode,proto3" form:"check_code" json:"check_code"`
+	NickName     string `protobuf:"bytes,4,opt,name=nickName,proto3" form:"nick_name" json:"nick_name"`
+	CheckCodeKey string `protobuf:"bytes,5,opt,name=checkCodeKey,proto3" form:"check_code_key" json:"check_code_key"`
 }
 
 func (x *LoginReq) Reset() {
@@ -233,11 +233,11 @@ type LoginResp struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Info     string `protobuf:"bytes,1,opt,name=info,proto3" form:"info" json:"info,omitempty"`
-	Token    string `protobuf:"bytes,2,opt,name=token,proto3" form:"token" json:"token,omitempty"`
-	UserId   string `protobuf:"bytes,3,opt,name=userId,proto3" form:"user_id" json:"user_id,omitempty"`
-	NickName string `protobuf:"bytes,4,opt,name=nickName,proto3" form:"nick_name" json:"nick_name,omitempty"`
-	Admin    bool   `protobuf:"varint,5,opt,name=admin,proto3" form:"admin" json:"admin,omitempty"`
+	Info     string `protobuf:"bytes,1,opt,name=info,proto3" form:"info" json:"info"`
+	Token    string `protobuf:"bytes,2,opt,name=token,proto3" form:"token" json:"token"`
+	UserId   string `protobuf:"bytes,3,opt,name=userId,proto3" form:"user_id" json:"user_id"`
+	NickName string `protobuf:"bytes,4,opt,name=nickName,proto3" form:"nick_name" json:"nick_name"`
+	Admin    bool   `protobuf:"varint,5,opt,name=admin,proto3" form:"admin" json:"admin"`
 }
 
 func (x *LoginResp) Reset() {
@@ -350,9 +350,9 @@ type GetCheckCodeResp struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Info         string `protobuf:"bytes,1,opt,name=info,proto3" form:"info" json:"info,omitempty"`
-	CheckCode    string `protobuf:"bytes,2,opt,name=checkCode,proto3" form:"check_code" json:"check_code,omitempty"`
-	CheckCodeKey string `protobuf:"bytes,3,opt,name=checkCodeKey,proto3" form:"check_code_key" json:"check_code_key,omitempty"`
+	Info         string `protobuf:"bytes,1,opt,name=info,proto3" form:"info" json:"info"`
+	CheckCode    string `protobuf:"bytes,2,opt,name=checkCode,proto3" form:"check_code" json:"check_code"`
+	CheckCodeKey string `protobuf:"bytes,3,opt,name=checkCodeKey,proto3" form:"check_code_key" json:"check_code_key"`
 }
 
 func (x *GetCheckCodeResp) Reset() {
