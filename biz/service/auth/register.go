@@ -68,7 +68,6 @@ func (h *RegisterService) Run(req *auth.RegisterReq) (resp *auth.RegisterResp, e
 }
 
 func CheckUserState(ctx context.Context, email string) (user *model.User, err error) {
-
 	user, err = query.Q.User.GetUserInfoByEmail(email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

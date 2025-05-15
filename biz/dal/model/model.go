@@ -7,6 +7,8 @@ import (
 var AllModels = []interface{}{
 	&User{},
 	&File{},
+	&ChatMessage{},
+	&Group{},
 }
 
 type User struct {
@@ -26,6 +28,60 @@ type User struct {
 	UpdatedAt int64  `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
 	IsDeleted bool   `gorm:"column:is_deleted;default:false" json:"is_deleted"`
 	IsAdmin   bool   `gorm:"column:is_admin;default:false" json:"is_admin"`
+}
+
+type Group struct {
+	GroupId   uint64  `gorm:"primaryKey;not null;column:group_id" json:"groupId"`
+	GroupName string  `gorm:"type:varchar(255);default:'';column:group_name" json:"groupName"`
+	OwnerId   uint64  `gorm:"type:bigint;not null;column:owner_id" json:"ownerId"`
+	Avatar    string  `gorm:"type:varchar(1024);default:'';column:avatar" json:"avatar"`
+	Member    []*User `gorm:"many2many:group_member;"`
+	Desc      string  `gorm:"type:varchar(1024);default:'';column:desc" json:"desc"`
+	CreatedAt int64   `gorm:"column:created_at;autoCreateTime" json:"created_at"`
+	UpdatedAt int64   `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
+}
+
+type ChatMessage struct {
+	gorm.Model
+	MsgType MessageType `gorm:"type:int;not null;default:0;column:msg_type" json:"msg_type"`
+	Content string      `gorm:"type:varchar(10240);default:'';column:content" json:"content"`
+	FromId  uint64      `gorm:"type:bigint;not null"`
+	ToId    uint64      `gorm:"type:bigint;not null"`
+}
+
+type MessageType uint8
+
+const (
+	MsgTypeText MessageType = iota
+	MsgTypeImage
+	MsgTypeAudio
+	MsgTypeVideo
+	MsgTypeFile
+)
+
+func (m *MessageType) String() (res string) {
+	switch *m {
+	case MsgTypeText:
+		return "text"
+	case MsgTypeImage:
+		return "image"
+	case MsgTypeAudio:
+		return "audio"
+	case MsgTypeVideo:
+		return "video"
+	case MsgTypeFile:
+		return "file"
+	default:
+		return "unknown"
+	}
+}
+
+var Str2MsgType = map[string]MessageType{
+	"text":  MsgTypeText,
+	"image": MsgTypeImage,
+	"audio": MsgTypeAudio,
+	"video": MsgTypeVideo,
+	"file":  MsgTypeFile,
 }
 
 type File struct {

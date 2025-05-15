@@ -42,6 +42,7 @@ type Config struct {
 		Port     string `mapstructure:"port"`
 		Username string `mapstructure:"username"`
 		Password string `mapstructure:"password"`
+		Database string `mapstructure:"database"`
 	} `mapstructure:"mysql"`
 
 	Redis struct {

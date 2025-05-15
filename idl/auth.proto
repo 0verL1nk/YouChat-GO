@@ -46,6 +46,7 @@ message GetCheckCodeResp {
    string checkCodeKey=3[(api.body)="check_code_key"];
 }
 
+
 service AuthService {
    rpc GetCheckCode(GetCheckCodeReq) returns(GetCheckCodeResp) {
       option (api.post) = "/checkCode";
@@ -57,3 +58,5 @@ service AuthService {
       option (api.post) = "/login";
    }
 }
+
+

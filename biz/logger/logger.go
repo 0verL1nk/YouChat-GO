@@ -4,6 +4,8 @@ import (
 	"core/conf"
 	"io"
 	"os"
+	"path"
+	"time"
 
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	hertzzap "github.com/hertz-contrib/logger/zap"
@@ -14,10 +16,19 @@ import (
 var c = conf.GetConf()
 
 func ImplyZapLogger() {
+	// 可定制的输出目录。
+	logFilePath := c.LOG.Path
+	if err := os.MkdirAll(logFilePath, 0o777); err != nil {
+		panic(err)
+	}
+	// 将文件名设置为日期
+	logFileName := time.Now().Format("2006-01-02") + ".log"
+	fileName := path.Join(logFilePath, logFileName)
+
 	logger := hertzzap.NewLogger(hertzzap.WithZapOptions(zap.AddCaller(), zap.AddCallerSkip(3)))
 	// Provides compression and deletion
 	lumberjackLogger := &lumberjack.Logger{
-		Filename:   c.LOG.Path,
+		Filename:   fileName,
 		MaxSize:    c.LOG.MaxSize,    // A file can be up to 20M.
 		MaxBackups: c.LOG.MaxBackups, // Save up to 5 files at the same time.
 		MaxAge:     c.LOG.MaxAge,     // A file can exist for a maximum of 10 days.

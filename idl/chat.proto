@@ -1,0 +1,21 @@
+
+// chat.proto
+syntax = "proto3";
+
+package chat;
+
+
+
+import "api.proto";
+message ConnectChatWSReq{
+
+}
+message ConnectChatWSResp{
+   
+}
+
+service ChatService{
+    rpc ConnectChatWS(ConnectChatWSReq) returns(ConnectChatWSResp) {
+       option (api.get) = "/ws/chat";
+    }
+ }

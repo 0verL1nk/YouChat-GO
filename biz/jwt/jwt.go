@@ -4,6 +4,7 @@ import (
 	"context"
 	"core/conf"
 	"errors"
+	"net/http"
 	"strings"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 )
 
 var config = conf.GetConf()
+
 var (
 	ErrMissingToken = errors.New("missing token")
 )
@@ -19,6 +21,32 @@ var (
 type TokenClaims struct {
 	UserId uint64
 	jwt.RegisteredClaims
+}
+
+func JwtMiddleware() app.HandlerFunc {
+	return func(c context.Context, ctx *app.RequestContext) {
+		authorization := ctx.GetHeader("Authorization")
+		authString := string(authorization)
+		parts := strings.Split(authString, " ")
+		if len(parts) == 2 && parts[0] == "Bearer" {
+			token := parts[1]
+			claims, err := ParseToken(token)
+			if err != nil {
+				ctx.JSON(http.StatusUnauthorized, map[string]string{
+					"error": "token is invalid"})
+				ctx.Abort()
+				return
+			}
+			ctx.Set("token", claims)
+			ctx.Next(c)
+		} else {
+			ctx.JSON(http.StatusUnauthorized, map[string]string{
+				"error": "token is missing"})
+			ctx.Abort()
+			return
+		}
+	}
+
 }
 
 // tokenCreate

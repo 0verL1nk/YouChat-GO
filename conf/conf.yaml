@@ -17,10 +17,11 @@ registry:
 
 # MySQL Database Configuration
 mysql:
-  host: "localhost"
+  host: "mysql"
   port: "3306"
-  username: "root"
-  password: "password"
+  username: "gorm"
+  password: "gorm"
+  database: "test"
 
 # Redis Configuration
 redis:
@@ -48,7 +49,7 @@ jwt:
   valid_days: 30
 
 log:
-  path: "./logs/app.log"
+  path: "./logs/"
   max_size: 50
   max_backups: 5
   max_age: 30
