@@ -12,7 +12,7 @@ var (
 )
 
 func GetGroupUserIDs(groupID uint64, userID uint64) (ids []uint64, err error) {
-	group, err := query.Q.Group.Where(query.Group.GroupId.Eq(groupID)).First()
+	group, err := query.Q.Group.Where(query.Group.ID.Eq(uint(groupID))).First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrGroupNotFound
@@ -20,10 +20,10 @@ func GetGroupUserIDs(groupID uint64, userID uint64) (ids []uint64, err error) {
 		return nil, err
 	}
 	for _, member := range group.Member {
-		if member.UserId == userID {
+		if member.ID == uint(userID) {
 			continue
 		}
-		ids = append(ids, member.UserId)
+		ids = append(ids, uint64(member.ID))
 	}
 	return
 }

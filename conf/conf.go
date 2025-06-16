@@ -29,6 +29,7 @@ type Config struct {
 		EnableAccessLog bool   `mapstructure:"enable_access_log"`
 		LogLevel        string `mapstructure:"log_level"`
 		OtlpAddr        string `mapstructure:"otlp_address"`
+		EnableCaptcha   bool   `mapstructure:"enable_captcha"`
 	} `mapstructure:"hertz"`
 
 	Registry struct {
@@ -91,6 +92,7 @@ func initConf() {
 
 	conf = new(Config)
 	viper.SetConfigType("yaml")
+	// 参数打包入可执行文件,可用.env覆盖
 	err = viper.ReadConfig(bytes.NewBuffer(configFile))
 	if err != nil {
 		panic(err)

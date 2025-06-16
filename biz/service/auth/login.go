@@ -8,8 +8,9 @@ import (
 	"core/biz/jwt"
 	"core/biz/utils"
 	auth "core/hertz_gen/auth"
-
 	"fmt"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
@@ -36,8 +37,10 @@ func (h *LoginService) Run(req *auth.LoginReq) (resp *auth.LoginResp, err error)
 	//}()
 	// todo edit your code
 	// 验证码校验
-	if !redis.RedisVerify(h.Context, req.CheckCodeKey, req.CheckCode, true) {
-		return &auth.LoginResp{}, errors.New("验证码错误")
+	if config.Hertz.EnableCaptcha {
+		if !redis.RedisVerify(h.Context, req.CheckCodeKey, req.CheckCode, true) {
+			return &auth.LoginResp{}, errors.New("验证码错误")
+		}
 	}
 	user, err := CheckUserState(h.Context, req.Email)
 	if err != nil {
@@ -47,16 +50,15 @@ func (h *LoginService) Run(req *auth.LoginReq) (resp *auth.LoginResp, err error)
 	if err != nil {
 		return &auth.LoginResp{}, ErrValidatePwd
 	}
-	token, err := jwt.CreateToken(h.Context, user.UserId)
+	token, expireAt, err := jwt.CreateToken(h.Context, uint64(user.ID))
 	if err != nil {
 		hlog.Error("create token failed:", err)
 		return &auth.LoginResp{}, ErrCreateToken
 	}
 	return &auth.LoginResp{
-		Info:     "Success",
-		Token:    token,
-		UserId:   fmt.Sprint(user.UserId),
-		NickName: user.Name,
-		Admin:    user.IsAdmin,
+		Token:         token,
+		UserId:        fmt.Sprint(user.ID),
+		NickName:      user.Name,
+		TokenExpireAt: timestamppb.New(expireAt),
 	}, nil
 }

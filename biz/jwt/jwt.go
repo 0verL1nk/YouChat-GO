@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -30,8 +31,10 @@ func JwtMiddleware() app.HandlerFunc {
 		parts := strings.Split(authString, " ")
 		if len(parts) == 2 && parts[0] == "Bearer" {
 			token := parts[1]
+			hlog.Debug("token:", token)
 			claims, err := ParseToken(token)
 			if err != nil {
+				hlog.Debug("err parse token:", err)
 				ctx.JSON(http.StatusUnauthorized, map[string]string{
 					"error": "token is invalid"})
 				ctx.Abort()
@@ -50,16 +53,17 @@ func JwtMiddleware() app.HandlerFunc {
 }
 
 // tokenCreate
-func CreateToken(ctx context.Context, userId uint64) (token string, err error) {
+func CreateToken(ctx context.Context, userId uint64) (token string, expireAt time.Time, err error) {
+	expireAt = time.Now().Add(time.Hour * 24 * time.Duration(config.JWT.ValidDays))
 	tokenClaims := &TokenClaims{
 		UserId: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * time.Duration(config.JWT.ValidDays))),
+			ExpiresAt: jwt.NewNumericDate(expireAt),
 		},
 	}
 	token, err = jwt.NewWithClaims(jwt.SigningMethodHS256, tokenClaims).SignedString([]byte(config.JWT.Secret))
 	if err != nil {
-		return "", err
+		return
 	}
 	return
 }
@@ -67,6 +71,7 @@ func CreateToken(ctx context.Context, userId uint64) (token string, err error) {
 // parse token
 
 func ParseToken(token string) (tokenClaims *TokenClaims, err error) {
+	tokenClaims = &TokenClaims{}
 	_, err = jwt.ParseWithClaims(token, tokenClaims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(config.JWT.Secret), nil
 	})

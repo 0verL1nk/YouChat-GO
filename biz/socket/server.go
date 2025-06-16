@@ -9,6 +9,8 @@ import (
 	"sync"
 
 	"core/biz/service/group"
+
+	"github.com/cloudwego/hertz/pkg/common/hlog"
 )
 
 type Server struct {
@@ -19,6 +21,8 @@ type Server struct {
 	Broadcast  chan []byte
 	Register   chan *Client
 	UnRegister chan *Client
+	Capacity   int
+	Size       int
 }
 
 func NewServer() *Server {
@@ -34,17 +38,29 @@ func NewServer() *Server {
 var SocketServer = NewServer()
 
 func OkMsgResp(userID uint64) []byte {
-	msg := Message{
+	msg := model.WSMessage{
 		From:    "system",
 		To:      strconv.FormatUint(userID, 10),
-		Type:    string(MsgTypeText),
+		Type:    model.MsgTypeText.String(),
 		Content: "ok",
 	}
 	message, _ := json.Marshal(msg)
 	return message
 }
 
+func ErrMsgResp(userID uint64, err error) []byte {
+	msg := model.WSMessage{
+		From:    "system",
+		To:      strconv.FormatUint(userID, 10),
+		Type:    model.MsgTypeText.String(),
+		Content: err.Error(),
+	}
+	message, _ := json.Marshal(msg)
+	return message
+}
+
 func (s *Server) Start() {
+	hlog.Info("socket server stated")
 	for {
 		select {
 		case client := <-s.Register:
@@ -62,16 +78,22 @@ func (s *Server) Start() {
 			s.Mutex.Unlock()
 		case message := <-s.Broadcast:
 			s.Mutex.Lock()
-			msg := Message{}
-			json.Unmarshal(message, &msg)
-			if msg.To != "" {
-				switch msg.Type {
-				case string(MsgTypeText):
-					{
-						SaveTextMsg(msg)
-						// 将单聊视为两个人的房间
-						SendTextMsg(msg)
+			msg := model.WSMessage{}
+			if err := json.Unmarshal(message, &msg); err != nil {
+				if msg.To != "" {
+					switch msg.Type {
+					case string(model.MsgTypeText):
+						{
+							SaveTextMsg(msg)
+							// 将单聊视为两个人的房间
+							SendTextMsg(msg)
+						}
 					}
+				} else {
+					// TODO
+					// 校验权限
+					// 广播到全体
+
 				}
 			}
 			s.Mutex.Unlock()
@@ -79,7 +101,7 @@ func (s *Server) Start() {
 	}
 }
 
-func SendTextMsg(msg Message) (err error) {
+func SendTextMsg(msg model.WSMessage) (err error) {
 	SocketServer.Mutex.Lock()
 	defer SocketServer.Mutex.Unlock()
 	var toID uint64
@@ -103,6 +125,10 @@ func SendTextMsg(msg Message) (err error) {
 		if client, ok := SocketServer.Clients[id]; ok {
 			message, _ := json.Marshal(msg)
 			client.Send <- message
+		} else {
+			// TODO:
+			// 消息之前已保存
+			// 此处需要做未读消息++
 		}
 	}
 	// 返回ok
@@ -118,7 +144,7 @@ var (
 	ErrParseUint      = errors.New("parse uint failed")
 )
 
-func SaveTextMsg(msg Message) (err error) {
+func SaveTextMsg(msg model.WSMessage) (err error) {
 	msgType, ok := model.Str2MsgType[msg.Type]
 	if !ok {
 		return ErrInvalidMsgType
@@ -135,8 +161,8 @@ func SaveTextMsg(msg Message) (err error) {
 	err = query.Q.ChatMessage.Create(&model.ChatMessage{
 		MsgType: msgType,
 		Content: msg.Content,
-		FromId:  fromID,
-		ToId:    toID,
+		FromId:  uint(fromID),
+		ToId:    uint(toID),
 	})
 	if err != nil {
 		return err

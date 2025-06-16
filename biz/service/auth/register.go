@@ -6,6 +6,7 @@ import (
 	"core/biz/dal/query"
 	"core/biz/dal/redis"
 	"core/biz/utils"
+	"core/conf"
 	auth "core/hertz_gen/auth"
 	"errors"
 
@@ -15,6 +16,7 @@ import (
 )
 
 var (
+	config              = conf.GetConf()
 	ErrUserNoFound      = errors.New("用户不存在")
 	ErrUserAlreadyExist = errors.New("用户已存在")
 	ErrUserProhibit     = errors.New("用户被禁用")
@@ -37,8 +39,10 @@ func (h *RegisterService) Run(req *auth.RegisterReq) (resp *auth.RegisterResp, e
 	// hlog.CtxInfof(h.Context, "resp = %+v", resp)
 	//}()
 	// todo edit your code
-	if !redis.RedisVerify(h.Context, req.CheckCodeKey, req.CheckCode, true) {
-		return &auth.RegisterResp{}, errors.New("验证码错误")
+	if config.Hertz.EnableCaptcha {
+		if !redis.RedisVerify(h.Context, req.CheckCodeKey, req.CheckCode, true) {
+			return &auth.RegisterResp{}, errors.New("验证码错误")
+		}
 	}
 	_, err = CheckUserState(h.Context, req.Email)
 	hlog.Debug("err:", err)

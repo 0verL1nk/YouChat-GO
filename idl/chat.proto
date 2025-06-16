@@ -3,19 +3,115 @@
 syntax = "proto3";
 
 package chat;
-
-
-
 import "api.proto";
-message ConnectChatWSReq{
+import public "google/protobuf/timestamp.proto";
+enum MessageType {
+   TEXT = 0;
+   IMAGE = 1;
+   FILE = 2;
+   SYSTEM = 3;
+ }
 
-}
+// message ChatMsg{
+//    int64 From=1[(api.body)="from"];
+//    int64 To=2[(api.body)="to"];
+//    MessageType Type=3[(api.body)="type"];
+//    string Text=4[(api.body)="text"];
+//    bytes FileContent=5[(api.body)="file_content"];
+//    int64 TimeStamp=6[(api.body)="time_stamp"];
+// }
+
+message ConnectChatWSReq{
+   string token=1[(api.body)="token"];
+}  
 message ConnectChatWSResp{
    
 }
 
+
+
+message ChatMsgImage {
+  string image_name = 1;   // 对应 TS 的 ImageName
+  string url        = 2;
+  string compressed = 3;   // base64 缩略图
+}
+
+message ChatMsgAudio {
+  string audio_name = 1;
+  string url        = 2;
+  string length     = 3;   // "day:hour:minute:second"
+}
+
+message ChatMsgVideo {
+  string video_name = 1;
+  string url        = 2;
+  string cover      = 3;   // base64 缩略图
+  string length     = 4;
+}
+
+message ChatMsgFile {
+  string url       = 1;
+  string file_name = 2;
+  enum FileType {
+    PDF    = 0;
+    WORD   = 1;
+    EXE    = 2;
+    TXT    = 3;
+    OTHERS = 4;
+  }
+  FileType file_type = 3;
+  string file_size  = 4;
+}
+
+message ChatMsg {
+   // 将 HTTP 请求的 body（或某个 JSON 字段）绑定到 from 字段
+   string from      = 1 [(api.body) = "From"];
+   string to        = 2 [(api.body) = "To"];
+ 
+   enum Type {
+     TEXT  = 0;
+     IMAGE = 1;
+     AUDIO = 2;
+     VIDEO = 3;
+     FILE  = 4;
+   }
+   Type type        = 3 [(api.body) = "Type"];
+ 
+   // 2000 成功, 5000 失败
+   int32 code       = 4 [(api.body) = "Code"];
+ 
+   // Unix 时间戳
+   google.protobuf.Timestamp created_at = 5 [(api.body) = "CreateAt"];
+ 
+   // 多态 content，始终映射到同一个 JSON 键 “Content”
+   oneof content {
+     string            text  = 6 [(api.body) = "Content"];
+     ChatMsgImage      image = 7 [(api.body) = "Content"];
+     ChatMsgAudio      audio = 8 [(api.body) = "Content"];
+     ChatMsgVideo      video = 9 [(api.body) = "Content"];
+     ChatMsgFile       file  = 10[(api.body) = "Content"];
+   }
+ }
+
+message GetConversationReq{
+   string GroupID=1[(api.body)="group_id"];
+   google.protobuf.Timestamp Before=2[(api.body)="before"];
+   int64 Page=3[(api.body)="page"];
+   int64 PageSize=4[(api.body)="page_size"];
+}
+
+message GetConversationResponse{
+   repeated ChatMsg Msgs=1[(api.body)="msgs"];
+}
+
+
+
+
 service ChatService{
     rpc ConnectChatWS(ConnectChatWSReq) returns(ConnectChatWSResp) {
-       option (api.get) = "/ws/chat";
+       option (api.get) = "/chat/ws";
+    }
+    rpc GetConversation(GetConversationReq) returns(GetConversationResponse){
+      option (api.get)="/chat/conversations/:groupID";
     }
  }

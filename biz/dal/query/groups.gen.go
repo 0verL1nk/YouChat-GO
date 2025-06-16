@@ -27,13 +27,14 @@ func newGroup(db *gorm.DB, opts ...gen.DOOption) group {
 
 	tableName := _group.groupDo.TableName()
 	_group.ALL = field.NewAsterisk(tableName)
-	_group.GroupId = field.NewUint64(tableName, "group_id")
+	_group.ID = field.NewUint(tableName, "id")
+	_group.CreatedAt = field.NewInt64(tableName, "created_at")
+	_group.UpdatedAt = field.NewInt64(tableName, "updated_at")
+	_group.DeletedAt = field.NewField(tableName, "deleted_at")
 	_group.GroupName = field.NewString(tableName, "group_name")
 	_group.OwnerId = field.NewUint64(tableName, "owner_id")
 	_group.Avatar = field.NewString(tableName, "avatar")
 	_group.Desc = field.NewString(tableName, "desc")
-	_group.CreatedAt = field.NewInt64(tableName, "created_at")
-	_group.UpdatedAt = field.NewInt64(tableName, "updated_at")
 	_group.Member = groupManyToManyMember{
 		db: db.Session(&gorm.Session{}),
 
@@ -49,13 +50,14 @@ type group struct {
 	groupDo
 
 	ALL       field.Asterisk
-	GroupId   field.Uint64
+	ID        field.Uint
+	CreatedAt field.Int64
+	UpdatedAt field.Int64
+	DeletedAt field.Field
 	GroupName field.String
 	OwnerId   field.Uint64
 	Avatar    field.String
 	Desc      field.String
-	CreatedAt field.Int64
-	UpdatedAt field.Int64
 	Member    groupManyToManyMember
 
 	fieldMap map[string]field.Expr
@@ -73,13 +75,14 @@ func (g group) As(alias string) *group {
 
 func (g *group) updateTableName(table string) *group {
 	g.ALL = field.NewAsterisk(table)
-	g.GroupId = field.NewUint64(table, "group_id")
+	g.ID = field.NewUint(table, "id")
+	g.CreatedAt = field.NewInt64(table, "created_at")
+	g.UpdatedAt = field.NewInt64(table, "updated_at")
+	g.DeletedAt = field.NewField(table, "deleted_at")
 	g.GroupName = field.NewString(table, "group_name")
 	g.OwnerId = field.NewUint64(table, "owner_id")
 	g.Avatar = field.NewString(table, "avatar")
 	g.Desc = field.NewString(table, "desc")
-	g.CreatedAt = field.NewInt64(table, "created_at")
-	g.UpdatedAt = field.NewInt64(table, "updated_at")
 
 	g.fillFieldMap()
 
@@ -96,14 +99,15 @@ func (g *group) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (g *group) fillFieldMap() {
-	g.fieldMap = make(map[string]field.Expr, 8)
-	g.fieldMap["group_id"] = g.GroupId
+	g.fieldMap = make(map[string]field.Expr, 9)
+	g.fieldMap["id"] = g.ID
+	g.fieldMap["created_at"] = g.CreatedAt
+	g.fieldMap["updated_at"] = g.UpdatedAt
+	g.fieldMap["deleted_at"] = g.DeletedAt
 	g.fieldMap["group_name"] = g.GroupName
 	g.fieldMap["owner_id"] = g.OwnerId
 	g.fieldMap["avatar"] = g.Avatar
 	g.fieldMap["desc"] = g.Desc
-	g.fieldMap["created_at"] = g.CreatedAt
-	g.fieldMap["updated_at"] = g.UpdatedAt
 
 }
 

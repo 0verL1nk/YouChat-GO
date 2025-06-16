@@ -27,7 +27,10 @@ func newUser(db *gorm.DB, opts ...gen.DOOption) user {
 
 	tableName := _user.userDo.TableName()
 	_user.ALL = field.NewAsterisk(tableName)
-	_user.UserId = field.NewUint64(tableName, "user_id")
+	_user.ID = field.NewUint(tableName, "id")
+	_user.CreatedAt = field.NewInt64(tableName, "created_at")
+	_user.UpdatedAt = field.NewInt64(tableName, "updated_at")
+	_user.DeletedAt = field.NewField(tableName, "deleted_at")
 	_user.Name = field.NewString(tableName, "name")
 	_user.Gender = field.NewInt(tableName, "gender")
 	_user.Language = field.NewString(tableName, "language")
@@ -39,8 +42,6 @@ func newUser(db *gorm.DB, opts ...gen.DOOption) user {
 	_user.Email = field.NewString(tableName, "email")
 	_user.Password = field.NewString(tableName, "password")
 	_user.Status = field.NewInt32(tableName, "status")
-	_user.CreatedAt = field.NewInt64(tableName, "created_at")
-	_user.UpdatedAt = field.NewInt64(tableName, "updated_at")
 	_user.IsDeleted = field.NewBool(tableName, "is_deleted")
 	_user.IsAdmin = field.NewBool(tableName, "is_admin")
 
@@ -53,7 +54,10 @@ type user struct {
 	userDo
 
 	ALL       field.Asterisk
-	UserId    field.Uint64
+	ID        field.Uint
+	CreatedAt field.Int64
+	UpdatedAt field.Int64
+	DeletedAt field.Field
 	Name      field.String
 	Gender    field.Int
 	Language  field.String
@@ -65,8 +69,6 @@ type user struct {
 	Email     field.String
 	Password  field.String
 	Status    field.Int32
-	CreatedAt field.Int64
-	UpdatedAt field.Int64
 	IsDeleted field.Bool
 	IsAdmin   field.Bool
 
@@ -85,7 +87,10 @@ func (u user) As(alias string) *user {
 
 func (u *user) updateTableName(table string) *user {
 	u.ALL = field.NewAsterisk(table)
-	u.UserId = field.NewUint64(table, "user_id")
+	u.ID = field.NewUint(table, "id")
+	u.CreatedAt = field.NewInt64(table, "created_at")
+	u.UpdatedAt = field.NewInt64(table, "updated_at")
+	u.DeletedAt = field.NewField(table, "deleted_at")
 	u.Name = field.NewString(table, "name")
 	u.Gender = field.NewInt(table, "gender")
 	u.Language = field.NewString(table, "language")
@@ -97,8 +102,6 @@ func (u *user) updateTableName(table string) *user {
 	u.Email = field.NewString(table, "email")
 	u.Password = field.NewString(table, "password")
 	u.Status = field.NewInt32(table, "status")
-	u.CreatedAt = field.NewInt64(table, "created_at")
-	u.UpdatedAt = field.NewInt64(table, "updated_at")
 	u.IsDeleted = field.NewBool(table, "is_deleted")
 	u.IsAdmin = field.NewBool(table, "is_admin")
 
@@ -117,8 +120,11 @@ func (u *user) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (u *user) fillFieldMap() {
-	u.fieldMap = make(map[string]field.Expr, 16)
-	u.fieldMap["user_id"] = u.UserId
+	u.fieldMap = make(map[string]field.Expr, 17)
+	u.fieldMap["id"] = u.ID
+	u.fieldMap["created_at"] = u.CreatedAt
+	u.fieldMap["updated_at"] = u.UpdatedAt
+	u.fieldMap["deleted_at"] = u.DeletedAt
 	u.fieldMap["name"] = u.Name
 	u.fieldMap["gender"] = u.Gender
 	u.fieldMap["language"] = u.Language
@@ -130,8 +136,6 @@ func (u *user) fillFieldMap() {
 	u.fieldMap["email"] = u.Email
 	u.fieldMap["password"] = u.Password
 	u.fieldMap["status"] = u.Status
-	u.fieldMap["created_at"] = u.CreatedAt
-	u.fieldMap["updated_at"] = u.UpdatedAt
 	u.fieldMap["is_deleted"] = u.IsDeleted
 	u.fieldMap["is_admin"] = u.IsAdmin
 }

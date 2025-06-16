@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+
 	"core/biz/dal/redis"
 	auth "core/hertz_gen/auth"
 
@@ -10,16 +11,16 @@ import (
 	"github.com/mojocn/base64Captcha"
 )
 
-type GetCheckCodeService struct {
+type GetCaptchaService struct {
 	RequestContext *app.RequestContext
 	Context        context.Context
 }
 
-func NewGetCheckCodeService(Context context.Context, RequestContext *app.RequestContext) *GetCheckCodeService {
-	return &GetCheckCodeService{RequestContext: RequestContext, Context: Context}
+func NewGetCaptchaService(Context context.Context, RequestContext *app.RequestContext) *GetCaptchaService {
+	return &GetCaptchaService{RequestContext: RequestContext, Context: Context}
 }
 
-func (h *GetCheckCodeService) Run(req *auth.GetCheckCodeReq) (resp *auth.GetCheckCodeResp, err error) {
+func (h *GetCaptchaService) Run(req *auth.GetCaptchaReq) (resp *auth.GetCaptchaResp, err error) {
 	//defer func() {
 	// hlog.CtxInfof(h.Context, "req = %+v", req)
 	// hlog.CtxInfof(h.Context, "resp = %+v", resp)
@@ -36,10 +37,10 @@ func (h *GetCheckCodeService) Run(req *auth.GetCheckCodeReq) (resp *auth.GetChec
 		hlog.Error("set checkCode failed:", err)
 		return
 	}
-	resp = &auth.GetCheckCodeResp{
-		Info:         "Success",
-		CheckCode:    b64s,
-		CheckCodeKey: id,
+	resp = &auth.GetCaptchaResp{
+		Captcha:    b64s,
+		CaptchaKey: id,
 	}
+
 	return
 }

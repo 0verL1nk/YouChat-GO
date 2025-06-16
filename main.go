@@ -7,7 +7,6 @@ import (
 	"core/biz/dal"
 	"core/biz/dal/mysql"
 	"core/biz/dal/query"
-	"core/biz/jwt"
 	"core/biz/logger"
 	"core/biz/router"
 	"core/biz/socket"
@@ -38,7 +37,6 @@ func main() {
 	h.GET("/ping", func(c context.Context, ctx *app.RequestContext) {
 		ctx.JSON(consts.StatusOK, utils.H{"ping": "pong"})
 	})
-	h.Use(jwt.JwtMiddleware())
 	router.GeneratedRegister(h)
 	go socket.SocketServer.Start()
 	h.Spin()

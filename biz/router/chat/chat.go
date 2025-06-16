@@ -18,7 +18,11 @@ func Register(r *server.Hertz) {
 
 	root := r.Group("/", rootMw()...)
 	{
-		_ws := root.Group("/ws", _wsMw()...)
-		_ws.GET("/chat", append(_connectchatwsMw(), chat.ConnectChatWS)...)
+		_chat := root.Group("/chat", _chatMw()...)
+		_chat.GET("/ws", append(_connectchatwsMw(), chat.ConnectChatWS)...)
+		{
+			_conversations := _chat.Group("/conversations", _conversationsMw()...)
+			_conversations.GET("/:groupID", append(_getconversationMw(), chat.GetConversation)...)
+		}
 	}
 }

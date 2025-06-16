@@ -10,8 +10,8 @@ import (
 
 func rootMw() []app.HandlerFunc {
 	// your code...
-	jwtAuth := jwt.JwtMiddleware()
-	return []app.HandlerFunc{jwtAuth}
+
+	return nil
 }
 
 func _wsMw() []app.HandlerFunc {
@@ -21,5 +21,26 @@ func _wsMw() []app.HandlerFunc {
 
 func _connectchatwsMw() []app.HandlerFunc {
 	// your code...
+	// jwtAuth := jwt.JwtMiddleware()
+	// return []app.HandlerFunc{jwtAuth}
 	return nil
+}
+
+func _chatMw() []app.HandlerFunc {
+	// your code...
+	// jwtAuth := jwt.JwtMiddleware()
+	// return []app.HandlerFunc{jwtAuth}
+	return nil
+}
+
+func _conversationsMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getconversationMw() []app.HandlerFunc {
+	// your code...
+	jwtAuth := jwt.JwtMiddleware()
+	return []app.HandlerFunc{jwtAuth}
+	// return nil
 }
