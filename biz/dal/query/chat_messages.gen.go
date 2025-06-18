@@ -33,8 +33,8 @@ func newChatMessage(db *gorm.DB, opts ...gen.DOOption) chatMessage {
 	_chatMessage.DeletedAt = field.NewField(tableName, "deleted_at")
 	_chatMessage.MsgType = field.NewUint8(tableName, "msg_type")
 	_chatMessage.Content = field.NewString(tableName, "content")
-	_chatMessage.FromId = field.NewUint64(tableName, "from_id")
-	_chatMessage.ToId = field.NewUint64(tableName, "to_id")
+	_chatMessage.FromId = field.NewUint(tableName, "from_id")
+	_chatMessage.ToId = field.NewUint(tableName, "to_id")
 
 	_chatMessage.fillFieldMap()
 
@@ -51,8 +51,8 @@ type chatMessage struct {
 	DeletedAt field.Field
 	MsgType   field.Uint8
 	Content   field.String
-	FromId    field.Uint64
-	ToId      field.Uint64
+	FromId    field.Uint
+	ToId      field.Uint
 
 	fieldMap map[string]field.Expr
 }
@@ -75,8 +75,8 @@ func (c *chatMessage) updateTableName(table string) *chatMessage {
 	c.DeletedAt = field.NewField(table, "deleted_at")
 	c.MsgType = field.NewUint8(table, "msg_type")
 	c.Content = field.NewString(table, "content")
-	c.FromId = field.NewUint64(table, "from_id")
-	c.ToId = field.NewUint64(table, "to_id")
+	c.FromId = field.NewUint(table, "from_id")
+	c.ToId = field.NewUint(table, "to_id")
 
 	c.fillFieldMap()
 

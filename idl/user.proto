@@ -2,7 +2,86 @@
 syntax = "proto3";
 
 package user;
-
-
 import "api.proto";
 
+message User{
+    int64 id = 1 [(api.body) = "id"];
+    string email = 2 [(api.body) = "email"];
+    string nick_name = 3 [(api.body) = "nick_name"];
+    string avatar = 4 [(api.body) = "avatar"];
+    // unix时间戳
+    int64 create_time = 5 [(api.body) = "create_time"];
+    // unix时间戳
+    int64 update_time = 6 [(api.body) = "update_time"];
+}
+
+message Conversation{
+    int64 id = 1 [(api.body) = "id"];
+    string name = 2 [(api.body) = "name"];
+    string avatar = 3 [(api.body) = "avatar"];
+    // unix时间戳
+    int64 last_message_time = 4 [(api.body) = "last_message_time"];
+    int64 unread_count = 5 [(api.body) = "unread_count"];
+}
+
+message SearchUserReq {
+    // 搜索关键词
+    string keyword = 1 [(api.body) = "keyword"];
+    // 分页参数
+    int32 page = 2 [(api.body) = "page"];
+    int32 page_size = 3 [(api.body) = "page_size"];
+}
+message SearchUserResp{
+    repeated User users = 1 [(api.body) = "users"];
+}
+
+message GetUserConversationsReq{
+
+}
+message GetUserConversationsResp {
+    repeated Conversation conversations = 1 [(api.body) = "conversations"];
+}
+
+message GetUserInfoReq {
+    int64 user_id = 1 [(api.body) = "user_id"];
+}
+
+message GetUserInfoResp {
+    int64 id = 1 [(api.body) = "id"];
+    string email = 2 [(api.body) = "email"];
+    string nick_name = 3 [(api.body) = "nick_name"];
+    string avatar = 4 [(api.body) = "avatar"];
+    // unix时间戳
+    int64 create_time = 5 [(api.body) = "create_time"];
+}
+// 添加好友
+message AddFriendReq {
+    int64 user_id = 1 [(api.body) = "user_id"];
+    string message = 2 [(api.body) = "message"]; // 附加消息
+}
+
+message AddFriendResp {
+}
+
+
+service UserService {
+    // 获取用户会话列表
+    rpc GetUserConversations(GetUserConversationsReq) returns (GetUserConversationsResp) {
+        option (api.get) = "/user/conversations";
+    }
+
+    // 搜索用户
+    rpc SearchUser(SearchUserReq) returns (SearchUserResp) {
+        option (api.post) = "/user/search";
+    }
+
+    // 获取用户信息
+    rpc GetUserInfo(GetUserInfoReq) returns (GetUserInfoResp) {
+        option (api.get) = "/user/me";
+    }
+
+    // 添加好友
+    rpc AddFriend(AddFriendReq) returns (AddFriendResp) {
+        option (api.post) = "/user/add_friend";
+    }
+}

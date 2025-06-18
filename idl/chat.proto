@@ -65,8 +65,8 @@ message ChatMsgFile {
 
 message ChatMsg {
    // 将 HTTP 请求的 body（或某个 JSON 字段）绑定到 from 字段
-   string from      = 1 [(api.body) = "From"];
-   string to        = 2 [(api.body) = "To"];
+   string from      = 1 [(api.body) = "from"];
+   string to        = 2 [(api.body) = "to"];
  
    enum Type {
      TEXT  = 0;
@@ -75,33 +75,37 @@ message ChatMsg {
      VIDEO = 3;
      FILE  = 4;
    }
-   Type type        = 3 [(api.body) = "Type"];
+   Type type        = 3 [(api.body) = "type"];
  
    // 2000 成功, 5000 失败
-   int32 code       = 4 [(api.body) = "Code"];
+   int32 code       = 4 [(api.body) = "code"];
  
    // Unix 时间戳
-   google.protobuf.Timestamp created_at = 5 [(api.body) = "CreateAt"];
+   google.protobuf.Timestamp created_at = 5 [(api.body) = "created_at"];
  
    // 多态 content，始终映射到同一个 JSON 键 “Content”
    oneof content {
-     string            text  = 6 [(api.body) = "Content"];
-     ChatMsgImage      image = 7 [(api.body) = "Content"];
-     ChatMsgAudio      audio = 8 [(api.body) = "Content"];
-     ChatMsgVideo      video = 9 [(api.body) = "Content"];
-     ChatMsgFile       file  = 10[(api.body) = "Content"];
+     string            text  = 6 [(api.body) = "content"];
+     ChatMsgImage      image = 7 [(api.body) = "content"];
+     ChatMsgAudio      audio = 8 [(api.body) = "content"];
+     ChatMsgVideo      video = 9 [(api.body) = "content"];
+     ChatMsgFile       file  = 10[(api.body) = "content"];
    }
  }
-
+// 获取某个聊天的聊天记录
 message GetConversationReq{
-   string GroupID=1[(api.body)="group_id"];
-   google.protobuf.Timestamp Before=2[(api.body)="before"];
+   uint64 GroupID=1[(api.body)="group_id"];
+   google.protobuf.Timestamp After=2[(api.body)="after"];
    int64 Page=3[(api.body)="page"];
    int64 PageSize=4[(api.body)="page_size"];
 }
 
 message GetConversationResponse{
-   repeated ChatMsg Msgs=1[(api.body)="msgs"];
+  int64 Total=1[(api.body)="total"];
+  int64 Page=2[(api.body)="page"];
+  int64 PageSize=3[(api.body)="page_size"];
+  // ChatMsg 的数组
+  repeated ChatMsg Msgs=4[(api.body)="msgs"];
 }
 
 
@@ -112,6 +116,6 @@ service ChatService{
        option (api.get) = "/chat/ws";
     }
     rpc GetConversation(GetConversationReq) returns(GetConversationResponse){
-      option (api.get)="/chat/conversations/:groupID";
+      option (api.get)="/chat/conversations";
     }
  }

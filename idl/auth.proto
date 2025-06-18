@@ -10,9 +10,9 @@ import public "google/protobuf/timestamp.proto";
 message RegisterReq {
    string email=1[(api.body)="email"];
    string password=2[(api.body)="password"];
-   string checkCode=3[(api.body)="check_code"];
-   string nickName=4[(api.body)="nick_name"];
-   string checkCodeKey=5[(api.body)="check_code_key"];
+   string captcha=3[(api.body)="captcha"];
+   string nick_name=4[(api.body)="nick_name"];
+   string captcha_key=5[(api.body)="captcha_key"];
 }
 
 message RegisterResp{
@@ -23,15 +23,15 @@ message LoginReq{
    string email=1[(api.body)="email"];
    string password=2[(api.body)="password"];
    string captcha=3[(api.body)="captcha"];
-   string nickName=4[(api.body)="nick_name"];
-   string captchaKey=5[(api.body)="captcha_key"];
+   string nick_name=4[(api.body)="nick_name"];
+   string captcha_key=5[(api.body)="captcha_key"];
 }
 
 message LoginResp {
    string token = 1[(api.body)="token"];
-   google.protobuf.Timestamp tokenExpireAt=2[(api.body)="expire_at"];
-   string userId=3[(api.body)="user_id"];
-   string nickName=4[(api.body)="nick_name"];
+   google.protobuf.Timestamp token_expire_at=2[(api.body)="expire_at"];
+   string user_id=3[(api.body)="user_id"];
+   string nick_name=4[(api.body)="nick_name"];
    string role = 5[(api.body)="admin"];
 }
 
@@ -40,7 +40,7 @@ message GetCaptchaReq {
 
 message GetCaptchaResp {
    string captcha=1[(api.body)="captcha"];
-   string captchaKey=2[(api.body)="captcha_key"];
+   string captcha_key=2[(api.body)="captcha_key"];
 }
 
 

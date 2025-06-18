@@ -16,49 +16,59 @@ import (
 )
 
 var (
-	Q           = new(Query)
-	ChatMessage *chatMessage
-	File        *file
-	Group       *group
-	User        *user
+	Q            = new(Query)
+	ChatMessage  *chatMessage
+	Conversation *conversation
+	File         *file
+	Group        *group
+	GroupMember  *groupMember
+	User         *user
 )
 
 func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
 	*Q = *Use(db, opts...)
 	ChatMessage = &Q.ChatMessage
+	Conversation = &Q.Conversation
 	File = &Q.File
 	Group = &Q.Group
+	GroupMember = &Q.GroupMember
 	User = &Q.User
 }
 
 func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 	return &Query{
-		db:          db,
-		ChatMessage: newChatMessage(db, opts...),
-		File:        newFile(db, opts...),
-		Group:       newGroup(db, opts...),
-		User:        newUser(db, opts...),
+		db:           db,
+		ChatMessage:  newChatMessage(db, opts...),
+		Conversation: newConversation(db, opts...),
+		File:         newFile(db, opts...),
+		Group:        newGroup(db, opts...),
+		GroupMember:  newGroupMember(db, opts...),
+		User:         newUser(db, opts...),
 	}
 }
 
 type Query struct {
 	db *gorm.DB
 
-	ChatMessage chatMessage
-	File        file
-	Group       group
-	User        user
+	ChatMessage  chatMessage
+	Conversation conversation
+	File         file
+	Group        group
+	GroupMember  groupMember
+	User         user
 }
 
 func (q *Query) Available() bool { return q.db != nil }
 
 func (q *Query) clone(db *gorm.DB) *Query {
 	return &Query{
-		db:          db,
-		ChatMessage: q.ChatMessage.clone(db),
-		File:        q.File.clone(db),
-		Group:       q.Group.clone(db),
-		User:        q.User.clone(db),
+		db:           db,
+		ChatMessage:  q.ChatMessage.clone(db),
+		Conversation: q.Conversation.clone(db),
+		File:         q.File.clone(db),
+		Group:        q.Group.clone(db),
+		GroupMember:  q.GroupMember.clone(db),
+		User:         q.User.clone(db),
 	}
 }
 
@@ -72,27 +82,33 @@ func (q *Query) WriteDB() *Query {
 
 func (q *Query) ReplaceDB(db *gorm.DB) *Query {
 	return &Query{
-		db:          db,
-		ChatMessage: q.ChatMessage.replaceDB(db),
-		File:        q.File.replaceDB(db),
-		Group:       q.Group.replaceDB(db),
-		User:        q.User.replaceDB(db),
+		db:           db,
+		ChatMessage:  q.ChatMessage.replaceDB(db),
+		Conversation: q.Conversation.replaceDB(db),
+		File:         q.File.replaceDB(db),
+		Group:        q.Group.replaceDB(db),
+		GroupMember:  q.GroupMember.replaceDB(db),
+		User:         q.User.replaceDB(db),
 	}
 }
 
 type queryCtx struct {
-	ChatMessage IChatMessageDo
-	File        IFileDo
-	Group       IGroupDo
-	User        IUserDo
+	ChatMessage  IChatMessageDo
+	Conversation IConversationDo
+	File         IFileDo
+	Group        IGroupDo
+	GroupMember  IGroupMemberDo
+	User         IUserDo
 }
 
 func (q *Query) WithContext(ctx context.Context) *queryCtx {
 	return &queryCtx{
-		ChatMessage: q.ChatMessage.WithContext(ctx),
-		File:        q.File.WithContext(ctx),
-		Group:       q.Group.WithContext(ctx),
-		User:        q.User.WithContext(ctx),
+		ChatMessage:  q.ChatMessage.WithContext(ctx),
+		Conversation: q.Conversation.WithContext(ctx),
+		File:         q.File.WithContext(ctx),
+		Group:        q.Group.WithContext(ctx),
+		GroupMember:  q.GroupMember.WithContext(ctx),
+		User:         q.User.WithContext(ctx),
 	}
 }
 

@@ -28,11 +28,11 @@ func newGroup(db *gorm.DB, opts ...gen.DOOption) group {
 	tableName := _group.groupDo.TableName()
 	_group.ALL = field.NewAsterisk(tableName)
 	_group.ID = field.NewUint(tableName, "id")
-	_group.CreatedAt = field.NewInt64(tableName, "created_at")
-	_group.UpdatedAt = field.NewInt64(tableName, "updated_at")
+	_group.CreatedAt = field.NewTime(tableName, "created_at")
+	_group.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_group.DeletedAt = field.NewField(tableName, "deleted_at")
 	_group.GroupName = field.NewString(tableName, "group_name")
-	_group.OwnerId = field.NewUint64(tableName, "owner_id")
+	_group.OwnerId = field.NewUint(tableName, "owner_id")
 	_group.Avatar = field.NewString(tableName, "avatar")
 	_group.Desc = field.NewString(tableName, "desc")
 	_group.Member = groupManyToManyMember{
@@ -51,11 +51,11 @@ type group struct {
 
 	ALL       field.Asterisk
 	ID        field.Uint
-	CreatedAt field.Int64
-	UpdatedAt field.Int64
+	CreatedAt field.Time
+	UpdatedAt field.Time
 	DeletedAt field.Field
 	GroupName field.String
-	OwnerId   field.Uint64
+	OwnerId   field.Uint
 	Avatar    field.String
 	Desc      field.String
 	Member    groupManyToManyMember
@@ -76,11 +76,11 @@ func (g group) As(alias string) *group {
 func (g *group) updateTableName(table string) *group {
 	g.ALL = field.NewAsterisk(table)
 	g.ID = field.NewUint(table, "id")
-	g.CreatedAt = field.NewInt64(table, "created_at")
-	g.UpdatedAt = field.NewInt64(table, "updated_at")
+	g.CreatedAt = field.NewTime(table, "created_at")
+	g.UpdatedAt = field.NewTime(table, "updated_at")
 	g.DeletedAt = field.NewField(table, "deleted_at")
 	g.GroupName = field.NewString(table, "group_name")
-	g.OwnerId = field.NewUint64(table, "owner_id")
+	g.OwnerId = field.NewUint(table, "owner_id")
 	g.Avatar = field.NewString(table, "avatar")
 	g.Desc = field.NewString(table, "desc")
 

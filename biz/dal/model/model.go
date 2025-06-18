@@ -12,6 +12,8 @@ var AllModels = []interface{}{
 	&File{},
 	&ChatMessage{},
 	&Group{},
+	&Conversation{},
+	&GroupMember{},
 }
 
 type User struct {
@@ -42,6 +44,73 @@ type Group struct {
 	Desc      string  `gorm:"type:varchar(1024);default:'';column:desc" json:"desc"` //群组简介
 }
 
+type GroupType uint8
+
+const (
+	GroupTypePublic  GroupType = iota // 公开群组，任何人都可以加入
+	GroupTypePrivate                  // 私有群组，只有邀请的用户可以加入
+	GroupTypeSecret                   // 密码群组，用户需要输入密码才能加入
+	GroupTypeFriend                   //两人群组,好友之间
+)
+
+func (g GroupType) String() string {
+	switch g {
+	case GroupTypePublic:
+		return "public"
+	case GroupTypePrivate:
+		return "private"
+	case GroupTypeSecret:
+		return "secret"
+	case GroupTypeFriend:
+		return "friend"
+	default:
+		return "unknown"
+	}
+}
+
+var Str2GroupType = map[string]GroupType{
+	"public":  GroupTypePublic,
+	"private": GroupTypePrivate,
+	"secret":  GroupTypeSecret,
+	"friend":  GroupTypeFriend,
+}
+
+type GroupRole uint8
+
+const (
+	GroupRoleOwner  GroupRole = iota // 群主
+	GroupRoleAdmin                   // 管理员
+	GroupRoleMember                  // 普通成员
+)
+
+func (g GroupRole) String() string {
+	switch g {
+	case GroupRoleOwner:
+		return "owner"
+	case GroupRoleAdmin:
+		return "admin"
+	case GroupRoleMember:
+		return "member"
+	default:
+		return "unknown"
+	}
+}
+
+var Str2GroupRole = map[string]GroupRole{
+	"owner":  GroupRoleOwner,
+	"admin":  GroupRoleAdmin,
+	"member": GroupRoleMember,
+}
+
+type GroupMember struct {
+	gorm.Model
+	GroupType GroupType `gorm:"type:int;not null;default:0;column:group_type" json:"groupType"` // 群组类型
+	GroupID   uint      `gorm:"type:bigint;not null;column:group_id" json:"groupId"`
+	UserID    uint      `gorm:"type:bigint;not null;column:user_id" json:"userId"`
+	Role      GroupRole `gorm:"type:int;not null;default:0;column:role" json:"role"` // 群组角色 0: 群主, 1: 管理员, 2: 成员
+	Status    int32     `gorm:"type:int;default:0;column:status" json:"status"`      // 0: normal, 1: admin, 2: baned
+}
+
 type Conversation struct {
 	gorm.Model
 	UserID      uint `gorm:"type:bigint;column:user_id"`
@@ -55,7 +124,8 @@ type ChatMessage struct {
 	MsgType MessageType `gorm:"type:int;not null;default:0;column:msg_type" json:"msg_type"`
 	Content string      `gorm:"type:varchar(10240);default:'';column:content" json:"content"`
 	FromId  uint        `gorm:"type:bigint;not null"`
-	ToId    uint        `gorm:"type:bigint;not null"`
+	// 找群组消息直接查ToID
+	ToId uint `gorm:"type:bigint;not null"`
 }
 
 type MessageType uint8

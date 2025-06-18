@@ -38,7 +38,7 @@ func (h *LoginService) Run(req *auth.LoginReq) (resp *auth.LoginResp, err error)
 	// todo edit your code
 	// 验证码校验
 	if config.Hertz.EnableCaptcha {
-		if !redis.RedisVerify(h.Context, req.CheckCodeKey, req.CheckCode, true) {
+		if !redis.RedisVerify(h.Context, req.CaptchaKey, req.Captcha, true) {
 			return &auth.LoginResp{}, errors.New("验证码错误")
 		}
 	}

@@ -40,7 +40,7 @@ func (h *RegisterService) Run(req *auth.RegisterReq) (resp *auth.RegisterResp, e
 	//}()
 	// todo edit your code
 	if config.Hertz.EnableCaptcha {
-		if !redis.RedisVerify(h.Context, req.CheckCodeKey, req.CheckCode, true) {
+		if !redis.RedisVerify(h.Context, req.CaptchaKey, req.Captcha, true) {
 			return &auth.RegisterResp{}, errors.New("验证码错误")
 		}
 	}
