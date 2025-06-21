@@ -17,6 +17,8 @@ import (
 	"gorm.io/gen/field"
 
 	"gorm.io/plugin/dbresolver"
+
+	"github.com/google/uuid"
 )
 
 func newGroupMember(db *gorm.DB, opts ...gen.DOOption) groupMember {
@@ -27,15 +29,20 @@ func newGroupMember(db *gorm.DB, opts ...gen.DOOption) groupMember {
 
 	tableName := _groupMember.groupMemberDo.TableName()
 	_groupMember.ALL = field.NewAsterisk(tableName)
-	_groupMember.ID = field.NewUint(tableName, "id")
+	_groupMember.ID = field.NewField(tableName, "id")
 	_groupMember.CreatedAt = field.NewTime(tableName, "created_at")
 	_groupMember.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_groupMember.DeletedAt = field.NewField(tableName, "deleted_at")
 	_groupMember.GroupType = field.NewUint8(tableName, "group_type")
-	_groupMember.GroupID = field.NewUint(tableName, "group_id")
-	_groupMember.UserID = field.NewUint(tableName, "user_id")
+	_groupMember.GroupID = field.NewField(tableName, "group_id")
+	_groupMember.UserID = field.NewField(tableName, "user_id")
 	_groupMember.Role = field.NewUint8(tableName, "role")
-	_groupMember.Status = field.NewInt32(tableName, "status")
+	_groupMember.Status = field.NewUint8(tableName, "status")
+	_groupMember.Group = groupMemberBelongsToGroup{
+		db: db.Session(&gorm.Session{}),
+
+		RelationField: field.NewRelation("Group", "model.Group"),
+	}
 
 	_groupMember.fillFieldMap()
 
@@ -46,15 +53,16 @@ type groupMember struct {
 	groupMemberDo
 
 	ALL       field.Asterisk
-	ID        field.Uint
+	ID        field.Field
 	CreatedAt field.Time
 	UpdatedAt field.Time
 	DeletedAt field.Field
 	GroupType field.Uint8
-	GroupID   field.Uint
-	UserID    field.Uint
+	GroupID   field.Field
+	UserID    field.Field
 	Role      field.Uint8
-	Status    field.Int32
+	Status    field.Uint8
+	Group     groupMemberBelongsToGroup
 
 	fieldMap map[string]field.Expr
 }
@@ -71,15 +79,15 @@ func (g groupMember) As(alias string) *groupMember {
 
 func (g *groupMember) updateTableName(table string) *groupMember {
 	g.ALL = field.NewAsterisk(table)
-	g.ID = field.NewUint(table, "id")
+	g.ID = field.NewField(table, "id")
 	g.CreatedAt = field.NewTime(table, "created_at")
 	g.UpdatedAt = field.NewTime(table, "updated_at")
 	g.DeletedAt = field.NewField(table, "deleted_at")
 	g.GroupType = field.NewUint8(table, "group_type")
-	g.GroupID = field.NewUint(table, "group_id")
-	g.UserID = field.NewUint(table, "user_id")
+	g.GroupID = field.NewField(table, "group_id")
+	g.UserID = field.NewField(table, "user_id")
 	g.Role = field.NewUint8(table, "role")
-	g.Status = field.NewInt32(table, "status")
+	g.Status = field.NewUint8(table, "status")
 
 	g.fillFieldMap()
 
@@ -96,7 +104,7 @@ func (g *groupMember) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (g *groupMember) fillFieldMap() {
-	g.fieldMap = make(map[string]field.Expr, 9)
+	g.fieldMap = make(map[string]field.Expr, 10)
 	g.fieldMap["id"] = g.ID
 	g.fieldMap["created_at"] = g.CreatedAt
 	g.fieldMap["updated_at"] = g.UpdatedAt
@@ -106,6 +114,7 @@ func (g *groupMember) fillFieldMap() {
 	g.fieldMap["user_id"] = g.UserID
 	g.fieldMap["role"] = g.Role
 	g.fieldMap["status"] = g.Status
+
 }
 
 func (g groupMember) clone(db *gorm.DB) groupMember {
@@ -116,6 +125,77 @@ func (g groupMember) clone(db *gorm.DB) groupMember {
 func (g groupMember) replaceDB(db *gorm.DB) groupMember {
 	g.groupMemberDo.ReplaceDB(db)
 	return g
+}
+
+type groupMemberBelongsToGroup struct {
+	db *gorm.DB
+
+	field.RelationField
+}
+
+func (a groupMemberBelongsToGroup) Where(conds ...field.Expr) *groupMemberBelongsToGroup {
+	if len(conds) == 0 {
+		return &a
+	}
+
+	exprs := make([]clause.Expression, 0, len(conds))
+	for _, cond := range conds {
+		exprs = append(exprs, cond.BeCond().(clause.Expression))
+	}
+	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
+	return &a
+}
+
+func (a groupMemberBelongsToGroup) WithContext(ctx context.Context) *groupMemberBelongsToGroup {
+	a.db = a.db.WithContext(ctx)
+	return &a
+}
+
+func (a groupMemberBelongsToGroup) Session(session *gorm.Session) *groupMemberBelongsToGroup {
+	a.db = a.db.Session(session)
+	return &a
+}
+
+func (a groupMemberBelongsToGroup) Model(m *model.GroupMember) *groupMemberBelongsToGroupTx {
+	return &groupMemberBelongsToGroupTx{a.db.Model(m).Association(a.Name())}
+}
+
+type groupMemberBelongsToGroupTx struct{ tx *gorm.Association }
+
+func (a groupMemberBelongsToGroupTx) Find() (result *model.Group, err error) {
+	return result, a.tx.Find(&result)
+}
+
+func (a groupMemberBelongsToGroupTx) Append(values ...*model.Group) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Append(targetValues...)
+}
+
+func (a groupMemberBelongsToGroupTx) Replace(values ...*model.Group) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Replace(targetValues...)
+}
+
+func (a groupMemberBelongsToGroupTx) Delete(values ...*model.Group) (err error) {
+	targetValues := make([]interface{}, len(values))
+	for i, v := range values {
+		targetValues[i] = v
+	}
+	return a.tx.Delete(targetValues...)
+}
+
+func (a groupMemberBelongsToGroupTx) Clear() error {
+	return a.tx.Clear()
+}
+
+func (a groupMemberBelongsToGroupTx) Count() int64 {
+	return a.tx.Count()
 }
 
 type groupMemberDo struct{ gen.DO }
@@ -180,17 +260,18 @@ type IGroupMemberDo interface {
 	UnderlyingDB() *gorm.DB
 	schema.Tabler
 
-	GetUserInfoByUserId(userId uint64) (result *model.User, err error)
+	GetUserInfoByUserId(userId uuid.UUID) (result *model.User, err error)
 	GetUserInfoByEmail(email string) (result *model.User, err error)
+	GetUserGroups(userId uuid.UUID) (result []*model.Group, err error)
 }
 
-// SELECT * FROM @@table WHERE user_id = @userId AND is_deleted is not true
-func (g groupMemberDo) GetUserInfoByUserId(userId uint64) (result *model.User, err error) {
+// SELECT * FROM @@table WHERE user_id = @userId
+func (g groupMemberDo) GetUserInfoByUserId(userId uuid.UUID) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, userId)
-	generateSQL.WriteString("SELECT * FROM group_members WHERE user_id = ? AND is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM group_members WHERE user_id = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = g.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
@@ -199,16 +280,31 @@ func (g groupMemberDo) GetUserInfoByUserId(userId uint64) (result *model.User, e
 	return
 }
 
-// SELECT * FROM @@table WHERE email = @email AND is_deleted is not true
+// SELECT * FROM @@table WHERE email = @email
 func (g groupMemberDo) GetUserInfoByEmail(email string) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, email)
-	generateSQL.WriteString("SELECT * FROM group_members WHERE email = ? AND is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM group_members WHERE email = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = g.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON  `group_members`.`user_id`=@userId WHERE `groups`.`id` = `group_members`.`group_id`
+func (g groupMemberDo) GetUserGroups(userId uuid.UUID) (result []*model.Group, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, userId)
+	generateSQL.WriteString("SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON `group_members`.`user_id`=? WHERE `groups`.`id` = `group_members`.`group_id` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = g.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
 	err = executeSQL.Error
 
 	return

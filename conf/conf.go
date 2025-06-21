@@ -44,8 +44,15 @@ type Config struct {
 		Username string `mapstructure:"username"`
 		Password string `mapstructure:"password"`
 		Database string `mapstructure:"database"`
+		TLS      string `mapstructure:"tls"` // TLS mode, e.g., "true", "true", "skip-verify"
 	} `mapstructure:"mysql"`
 
+	Kafka struct {
+		Address  []string `mapstructure:"address"`
+		Username string   `mapstructure:"username"`
+		Password string   `mapstructure:"password"`
+		Topic    string   `mapstructure:"topic"`
+	} `mapstructure:"kafka"`
 	Redis struct {
 		Address  string `mapstructure:"address"`
 		Password string `mapstructure:"password"`
@@ -84,6 +91,7 @@ func GetConf() *Config {
 }
 
 func initConf() {
+	setDefault()
 	// Load .env file
 	err := godotenv.Load()
 	if err != nil {
@@ -136,4 +144,9 @@ func LogLevel() hlog.Level {
 	default:
 		return hlog.LevelInfo
 	}
+}
+
+func setDefault() {
+	viper.SetDefault("mysql.tls", "false")
+	viper.SetDefault("hertz.address", ":5050")
 }

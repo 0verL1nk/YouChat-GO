@@ -10,27 +10,6 @@ import (
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 )
 
-// GetUserConversations .
-// @router /user/conversations [GET]
-func GetUserConversations(ctx context.Context, c *app.RequestContext) {
-	var err error
-	var req user.GetUserConversationsReq
-	err = c.BindAndValidate(&req)
-	if err != nil {
-		utils.SendErrResponse(ctx, c, consts.StatusBadRequest, err)
-		return
-	}
-
-	resp := &user.GetUserConversationsResp{}
-	resp, err = service.NewGetUserConversationsService(ctx, c).Run(&req)
-	if err != nil {
-		utils.SendErrResponse(ctx, c, consts.StatusInternalServerError, err)
-		return
-	}
-
-	utils.SendSuccessResponse(ctx, c, consts.StatusOK, resp)
-}
-
 // SearchUser .
 // @router /user/search [POST]
 func SearchUser(ctx context.Context, c *app.RequestContext) {
@@ -85,6 +64,26 @@ func AddFriend(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp, err := service.NewAddFriendService(ctx, c).Run(&req)
+
+	if err != nil {
+		utils.SendErrResponse(ctx, c, consts.StatusOK, err)
+		return
+	}
+	utils.SendSuccessResponse(ctx, c, consts.StatusOK, resp)
+}
+
+// GetUserContacts .
+// @router /user/contacts [GET]
+func GetUserContacts(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req user.GetUserContactsReq
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		utils.SendErrResponse(ctx, c, consts.StatusOK, err)
+		return
+	}
+
+	resp, err := service.NewGetUserContactsService(ctx, c).Run(&req)
 
 	if err != nil {
 		utils.SendErrResponse(ctx, c, consts.StatusOK, err)

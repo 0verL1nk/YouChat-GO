@@ -17,6 +17,8 @@ import (
 	"gorm.io/gen/field"
 
 	"gorm.io/plugin/dbresolver"
+
+	"github.com/google/uuid"
 )
 
 func newConversation(db *gorm.DB, opts ...gen.DOOption) conversation {
@@ -27,14 +29,14 @@ func newConversation(db *gorm.DB, opts ...gen.DOOption) conversation {
 
 	tableName := _conversation.conversationDo.TableName()
 	_conversation.ALL = field.NewAsterisk(tableName)
-	_conversation.ID = field.NewUint(tableName, "id")
+	_conversation.ID = field.NewField(tableName, "id")
 	_conversation.CreatedAt = field.NewTime(tableName, "created_at")
 	_conversation.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_conversation.DeletedAt = field.NewField(tableName, "deleted_at")
-	_conversation.UserID = field.NewUint(tableName, "user_id")
-	_conversation.GroupID = field.NewUint(tableName, "group_id")
+	_conversation.UserID = field.NewField(tableName, "user_id")
+	_conversation.GroupID = field.NewField(tableName, "group_id")
 	_conversation.LastMsgTime = field.NewTime(tableName, "last_msg_time")
-	_conversation.UnReadNum = field.NewUint(tableName, "un_read_num")
+	_conversation.UnReadNum = field.NewUint64(tableName, "un_read_num")
 
 	_conversation.fillFieldMap()
 
@@ -45,14 +47,14 @@ type conversation struct {
 	conversationDo
 
 	ALL         field.Asterisk
-	ID          field.Uint
+	ID          field.Field
 	CreatedAt   field.Time
 	UpdatedAt   field.Time
 	DeletedAt   field.Field
-	UserID      field.Uint
-	GroupID     field.Uint
+	UserID      field.Field
+	GroupID     field.Field
 	LastMsgTime field.Time
-	UnReadNum   field.Uint
+	UnReadNum   field.Uint64
 
 	fieldMap map[string]field.Expr
 }
@@ -69,14 +71,14 @@ func (c conversation) As(alias string) *conversation {
 
 func (c *conversation) updateTableName(table string) *conversation {
 	c.ALL = field.NewAsterisk(table)
-	c.ID = field.NewUint(table, "id")
+	c.ID = field.NewField(table, "id")
 	c.CreatedAt = field.NewTime(table, "created_at")
 	c.UpdatedAt = field.NewTime(table, "updated_at")
 	c.DeletedAt = field.NewField(table, "deleted_at")
-	c.UserID = field.NewUint(table, "user_id")
-	c.GroupID = field.NewUint(table, "group_id")
+	c.UserID = field.NewField(table, "user_id")
+	c.GroupID = field.NewField(table, "group_id")
 	c.LastMsgTime = field.NewTime(table, "last_msg_time")
-	c.UnReadNum = field.NewUint(table, "un_read_num")
+	c.UnReadNum = field.NewUint64(table, "un_read_num")
 
 	c.fillFieldMap()
 
@@ -176,17 +178,18 @@ type IConversationDo interface {
 	UnderlyingDB() *gorm.DB
 	schema.Tabler
 
-	GetUserInfoByUserId(userId uint64) (result *model.User, err error)
+	GetUserInfoByUserId(userId uuid.UUID) (result *model.User, err error)
 	GetUserInfoByEmail(email string) (result *model.User, err error)
+	GetUserGroups(userId uuid.UUID) (result []*model.Group, err error)
 }
 
-// SELECT * FROM @@table WHERE user_id = @userId AND is_deleted is not true
-func (c conversationDo) GetUserInfoByUserId(userId uint64) (result *model.User, err error) {
+// SELECT * FROM @@table WHERE user_id = @userId
+func (c conversationDo) GetUserInfoByUserId(userId uuid.UUID) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, userId)
-	generateSQL.WriteString("SELECT * FROM conversations WHERE user_id = ? AND is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM conversations WHERE user_id = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = c.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
@@ -195,16 +198,31 @@ func (c conversationDo) GetUserInfoByUserId(userId uint64) (result *model.User, 
 	return
 }
 
-// SELECT * FROM @@table WHERE email = @email AND is_deleted is not true
+// SELECT * FROM @@table WHERE email = @email
 func (c conversationDo) GetUserInfoByEmail(email string) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, email)
-	generateSQL.WriteString("SELECT * FROM conversations WHERE email = ? AND is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM conversations WHERE email = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = c.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON  `group_members`.`user_id`=@userId WHERE `groups`.`id` = `group_members`.`group_id`
+func (c conversationDo) GetUserGroups(userId uuid.UUID) (result []*model.Group, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, userId)
+	generateSQL.WriteString("SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON `group_members`.`user_id`=? WHERE `groups`.`id` = `group_members`.`group_id` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = c.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
 	err = executeSQL.Error
 
 	return

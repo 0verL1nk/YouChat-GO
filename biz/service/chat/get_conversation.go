@@ -2,7 +2,6 @@ package chat
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"core/biz/cerrors"
@@ -13,7 +12,8 @@ import (
 	chat "core/hertz_gen/chat"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/google/uuid"
 )
 
 type GetConversationService struct {
@@ -32,10 +32,16 @@ func (h *GetConversationService) Run(req *chat.GetConversationReq) (resp *chat.G
 	//}()
 
 	// 获取默认值
-	page, pageSize := utils.GetDefaultPageParam(int(req.Page), int(req.PageSize))
-	after := utils.ParseTimestamp(req.After, time.Time{})
+	page, pageSize := utils.GetDefaultPageParam(req.Page, req.PageSize)
+	after := utils.ParseUnixTime(req.After, time.Unix(0, 0))
+	// parse UUID
+	groupID, err := uuid.Parse(req.GroupID)
+	if err != nil {
+		return nil, cerrors.Wrap(err, "err parse groupID")
+	}
+
 	// 检查会话是否存在
-	exists, err := query.Group.WithContext(h.Context).Where(query.Group.ID.Eq(uint(req.GroupID))).Count()
+	exists, err := query.Group.WithContext(h.Context).Where(query.Group.ID.Eq(groupID)).Count()
 	if err != nil {
 		return nil, cerrors.Wrap(err, "err check group exists")
 	}
@@ -47,7 +53,7 @@ func (h *GetConversationService) Run(req *chat.GetConversationReq) (resp *chat.G
 	if err != nil {
 		return nil, cerrors.Wrap(err, "err get token from middleware")
 	}
-	isInConversation, err := IsInConversation(h.Context, uint(token.UserId), uint(req.GroupID))
+	isInConversation, err := IsInConversation(h.Context, token.UserId, groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -55,19 +61,16 @@ func (h *GetConversationService) Run(req *chat.GetConversationReq) (resp *chat.G
 		return nil, cerrors.ErrUserNotInGroup
 	}
 	// 获取会话数量
-	q := query.ChatMessage.WithContext(h.Context).Where(query.ChatMessage.ToId.Eq(uint(req.GroupID)))
-	msgNumTotal, err := q.Count()
-	if err != nil {
-		return nil, cerrors.Wrap(err, "err get chat message")
-	}
-	msgs, err := q.Offset((page - 1) * pageSize).
-		Limit(pageSize).
-		Order(query.ChatMessage.CreatedAt.Desc()).
+	q := query.ChatMessage.WithContext(h.Context).Where(query.ChatMessage.ToId.Eq(groupID))
+	msgs, count, err := q.
+		Order(query.ChatMessage.CreatedAt.Asc()).
 		Where(query.ChatMessage.CreatedAt.Gt(after)).
-		Find()
+		FindByPage((page-1)*pageSize, pageSize)
 	if err != nil {
-		return nil, cerrors.Wrap(err, "err get chat message")
+		hlog.Error(cerrors.Wrap(err, "err get chat message"))
+		return nil, cerrors.ErrFetchDataFromDatabase
 	}
+	hlog.Debugf("get conversation msgs: %v, page: %d, pageSize: %d, total: %d, after:%v", msgs, page, pageSize, count, after)
 	// 构建响应
 	resp, err = constructConversationResponse(msgs)
 	if err != nil {
@@ -75,11 +78,11 @@ func (h *GetConversationService) Run(req *chat.GetConversationReq) (resp *chat.G
 	}
 	resp.Page = int64(page)
 	resp.PageSize = int64(pageSize)
-	resp.Total = msgNumTotal
+	resp.Total = count
 	return
 }
 
-func IsInConversation(ctx context.Context, userID uint, groupID uint) (bool, error) {
+func IsInConversation(ctx context.Context, userID uuid.UUID, groupID uuid.UUID) (bool, error) {
 	// 检查用户是否在群组中
 	num, err := query.GroupMember.WithContext(ctx).Where(query.GroupMember.UserID.Eq(userID), query.GroupMember.GroupID.Eq(groupID)).Count()
 	if err != nil {
@@ -94,11 +97,13 @@ func constructConversationResponse(msgs []*model.ChatMessage) (*chat.GetConversa
 		Msgs: make([]*chat.ChatMsg, 0, len(msgs)),
 	}
 	for _, msg := range msgs {
-		res := &chat.ChatMsg{}
-		res.From = strconv.FormatUint(uint64(msg.FromId), 10)
-		res.To = strconv.FormatUint(uint64(msg.ToId), 10)
-		res.Type = chat.ChatMsg_Type(msg.MsgType)
-		res.CreatedAt = timestamppb.New(msg.CreatedAt)
+		res := &chat.ChatMsg{
+			Id:        msg.ID.String(),
+			From:      msg.FromId.String(),
+			To:        msg.ToId.String(),
+			Type:      chat.ChatMsg_Type(msg.MsgType),
+			CreatedAt: msg.CreatedAt.Unix(),
+		}
 		switch msg.MsgType {
 		case model.MsgTypeText:
 			res.Content = &chat.ChatMsg_Text{

@@ -9,12 +9,14 @@ import (
 	"core/biz/dal/query"
 	"core/biz/logger"
 	"core/biz/router"
+	mq_consumer "core/biz/service/mq/consumer"
 	"core/biz/socket"
 	"core/conf"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/cloudwego/hertz/pkg/common/utils"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/hertz-contrib/cors"
@@ -29,6 +31,7 @@ func main() {
 	// use `go run cmd/gorm_gen/main.go` to generate the code
 	query.SetDefault(mysql.DB)
 	address := conf.GetConf().Hertz.Address
+	hlog.Info("address:port ", address)
 	h := server.New(server.WithHostPorts(address))
 
 	registerMiddleware(h)
@@ -38,7 +41,10 @@ func main() {
 		ctx.JSON(consts.StatusOK, utils.H{"ping": "pong"})
 	})
 	router.GeneratedRegister(h)
+	// 启动消息队列
+	go mq_consumer.StartConsumer()
 	go socket.SocketServer.Start()
+
 	h.Spin()
 }
 

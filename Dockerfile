@@ -32,7 +32,9 @@ ARG TARGETARCH
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,target=. \
     CGO_ENABLED=0 GOARCH=$TARGETARCH go build -o /bin/server .
-
+    RUN --mount=type=cache,target=/go/pkg/mod/ \
+    --mount=type=bind,target=. \
+    CGO_ENABLED=0 GOARCH=$TARGETARCH go build -o /bin/migrator ./cmd/gorm/main.go
 ################################################################################
 # Create a new stage for running the application that contains the minimal
 # runtime dependencies for the application. This often uses a different base
@@ -57,10 +59,14 @@ RUN adduser \
     --no-create-home \
     --uid "${UID}" \
     appuser
+RUN mkdir -p /app/logs && chown -R ${UID}:${UID} /app
 USER appuser
 
 # Copy the executable from the "build" stage.
 COPY --from=build /bin/server /bin/
+COPY --from=build /bin/migrator /bin/
+# Copy Config File
+COPY ./conf/conf.yaml /bin/config.yaml
 # Expose the port that the application listens on.
 EXPOSE 8080
 

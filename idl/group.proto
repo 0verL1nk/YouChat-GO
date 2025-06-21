@@ -1,0 +1,49 @@
+// group.proto
+syntax = "proto3";
+
+package group;
+import "api.proto";
+
+
+message CreateGroupReq{
+    string name = 1 [(api.body) = "name"]; // 群组名称
+    string avatar = 2 [(api.body) = "avatar"]; // 群组头像
+}
+
+message CreateGroupResp{
+    string GroupID = 1 [(api.body) = "group_id"]; // 创建成功的群组ID
+}
+
+message SearchGroupReq {
+    // 搜索关键词
+    string keyword = 1 [(api.body) = "keyword"];
+    string id=2[(api.body) = "id"]; // 群组ID
+    // 分页参数
+    int32 page = 3 [(api.body) = "page"];
+    int32 page_size = 4 [(api.body) = "page_size"];
+}
+
+message Group{
+    string id = 1 [(api.body) = "id"]; // 群组ID
+    string name = 2 [(api.body) = "name"]; // 群组名称
+    string avatar = 3 [(api.body) = "avatar"]; // 群组头像
+    // 群组创建时间，Unix 时间戳
+    int64 create_time = 4 [(api.body) = "create_time"];
+}
+
+message SearchGroupResp{
+    // 群组列表
+    repeated Group groups = 1 [(api.body) = "groups"];
+    int64 page = 2 [(api.body) = "page"]; // 当前页码
+    int64 page_size = 3 [(api.body) = "page_size"]; // 每页大小
+    int64 total = 4 [(api.body) = "total"]; // 总记录数
+}
+
+service GroupService {
+    rpc CreateGroup(CreateGroupReq) returns (CreateGroupResp) {
+        option (api.post) = "/group/create";
+    }
+    rpc SearchGroup(SearchGroupReq) returns (SearchGroupResp) {
+        option (api.post) = "/group/search";
+    }
+}

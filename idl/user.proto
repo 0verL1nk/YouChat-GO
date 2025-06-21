@@ -15,8 +15,9 @@ message User{
     int64 update_time = 6 [(api.body) = "update_time"];
 }
 
-message Conversation{
-    int64 id = 1 [(api.body) = "id"];
+message Contact{
+    // groupID
+    string group_id = 1 [(api.body) = "group_id"];
     string name = 2 [(api.body) = "name"];
     string avatar = 3 [(api.body) = "avatar"];
     // unix时间戳
@@ -35,11 +36,12 @@ message SearchUserResp{
     repeated User users = 1 [(api.body) = "users"];
 }
 
-message GetUserConversationsReq{
-
+message GetUserContactsReq{
+    int64 page=1[(api.body) = "page"];  
+    int64 page_size=2[(api.body) = "page_size"];  // 每页大小
 }
-message GetUserConversationsResp {
-    repeated Conversation conversations = 1 [(api.body) = "conversations"];
+message GetUserContactsResp {
+    repeated Contact contacts = 1 [(api.body) = "contacts"];
 }
 
 message GetUserInfoReq {
@@ -66,8 +68,8 @@ message AddFriendResp {
 
 service UserService {
     // 获取用户会话列表
-    rpc GetUserConversations(GetUserConversationsReq) returns (GetUserConversationsResp) {
-        option (api.get) = "/user/conversations";
+    rpc GetUserContacts(GetUserContactsReq) returns (GetUserContactsResp) {
+        option (api.get) = "/user/contacts";
     }
 
     // 搜索用户

@@ -11,6 +11,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 var config = conf.GetConf()
@@ -20,7 +21,7 @@ var (
 )
 
 type TokenClaims struct {
-	UserId uint64
+	UserId uuid.UUID `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
@@ -53,7 +54,7 @@ func JwtMiddleware() app.HandlerFunc {
 }
 
 // tokenCreate
-func CreateToken(ctx context.Context, userId uint64) (token string, expireAt time.Time, err error) {
+func CreateToken(ctx context.Context, userId uuid.UUID) (token string, expireAt time.Time, err error) {
 	expireAt = time.Now().Add(time.Hour * 24 * time.Duration(config.JWT.ValidDays))
 	tokenClaims := &TokenClaims{
 		UserId: userId,

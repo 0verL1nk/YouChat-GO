@@ -17,6 +17,8 @@ import (
 	"gorm.io/gen/field"
 
 	"gorm.io/plugin/dbresolver"
+
+	"github.com/google/uuid"
 )
 
 func newFile(db *gorm.DB, opts ...gen.DOOption) file {
@@ -27,11 +29,11 @@ func newFile(db *gorm.DB, opts ...gen.DOOption) file {
 
 	tableName := _file.fileDo.TableName()
 	_file.ALL = field.NewAsterisk(tableName)
-	_file.ID = field.NewUint(tableName, "id")
+	_file.ID = field.NewField(tableName, "id")
 	_file.CreatedAt = field.NewTime(tableName, "created_at")
 	_file.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_file.DeletedAt = field.NewField(tableName, "deleted_at")
-	_file.UserId = field.NewUint64(tableName, "user_id")
+	_file.UserId = field.NewField(tableName, "user_id")
 	_file.SID = field.NewField(tableName, "sid")
 	_file.FileOriginName = field.NewString(tableName, "file_origin_name")
 	_file.Key = field.NewString(tableName, "key")
@@ -46,11 +48,11 @@ type file struct {
 	fileDo
 
 	ALL            field.Asterisk
-	ID             field.Uint
+	ID             field.Field
 	CreatedAt      field.Time
 	UpdatedAt      field.Time
 	DeletedAt      field.Field
-	UserId         field.Uint64
+	UserId         field.Field
 	SID            field.Field
 	FileOriginName field.String
 	Key            field.String
@@ -71,11 +73,11 @@ func (f file) As(alias string) *file {
 
 func (f *file) updateTableName(table string) *file {
 	f.ALL = field.NewAsterisk(table)
-	f.ID = field.NewUint(table, "id")
+	f.ID = field.NewField(table, "id")
 	f.CreatedAt = field.NewTime(table, "created_at")
 	f.UpdatedAt = field.NewTime(table, "updated_at")
 	f.DeletedAt = field.NewField(table, "deleted_at")
-	f.UserId = field.NewUint64(table, "user_id")
+	f.UserId = field.NewField(table, "user_id")
 	f.SID = field.NewField(table, "sid")
 	f.FileOriginName = field.NewString(table, "file_origin_name")
 	f.Key = field.NewString(table, "key")
@@ -180,17 +182,18 @@ type IFileDo interface {
 	UnderlyingDB() *gorm.DB
 	schema.Tabler
 
-	GetUserInfoByUserId(userId uint64) (result *model.User, err error)
+	GetUserInfoByUserId(userId uuid.UUID) (result *model.User, err error)
 	GetUserInfoByEmail(email string) (result *model.User, err error)
+	GetUserGroups(userId uuid.UUID) (result []*model.Group, err error)
 }
 
-// SELECT * FROM @@table WHERE user_id = @userId AND is_deleted is not true
-func (f fileDo) GetUserInfoByUserId(userId uint64) (result *model.User, err error) {
+// SELECT * FROM @@table WHERE user_id = @userId
+func (f fileDo) GetUserInfoByUserId(userId uuid.UUID) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, userId)
-	generateSQL.WriteString("SELECT * FROM files WHERE user_id = ? AND is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM files WHERE user_id = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = f.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
@@ -199,16 +202,31 @@ func (f fileDo) GetUserInfoByUserId(userId uint64) (result *model.User, err erro
 	return
 }
 
-// SELECT * FROM @@table WHERE email = @email AND is_deleted is not true
+// SELECT * FROM @@table WHERE email = @email
 func (f fileDo) GetUserInfoByEmail(email string) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, email)
-	generateSQL.WriteString("SELECT * FROM files WHERE email = ? AND is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM files WHERE email = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = f.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON  `group_members`.`user_id`=@userId WHERE `groups`.`id` = `group_members`.`group_id`
+func (f fileDo) GetUserGroups(userId uuid.UUID) (result []*model.Group, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, userId)
+	generateSQL.WriteString("SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON `group_members`.`user_id`=? WHERE `groups`.`id` = `group_members`.`group_id` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = f.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
 	err = executeSQL.Error
 
 	return

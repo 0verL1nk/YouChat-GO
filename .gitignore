@@ -34,3 +34,5 @@ _testmain.go
 /output
 *.local.yml
 .env
+./conf/conf.yaml
+/test_local

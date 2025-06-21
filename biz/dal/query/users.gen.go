@@ -17,6 +17,8 @@ import (
 	"gorm.io/gen/field"
 
 	"gorm.io/plugin/dbresolver"
+
+	"github.com/google/uuid"
 )
 
 func newUser(db *gorm.DB, opts ...gen.DOOption) user {
@@ -27,9 +29,9 @@ func newUser(db *gorm.DB, opts ...gen.DOOption) user {
 
 	tableName := _user.userDo.TableName()
 	_user.ALL = field.NewAsterisk(tableName)
-	_user.ID = field.NewUint(tableName, "id")
-	_user.CreatedAt = field.NewInt64(tableName, "created_at")
-	_user.UpdatedAt = field.NewInt64(tableName, "updated_at")
+	_user.ID = field.NewField(tableName, "id")
+	_user.CreatedAt = field.NewTime(tableName, "created_at")
+	_user.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_user.DeletedAt = field.NewField(tableName, "deleted_at")
 	_user.Name = field.NewString(tableName, "name")
 	_user.Gender = field.NewInt(tableName, "gender")
@@ -42,7 +44,6 @@ func newUser(db *gorm.DB, opts ...gen.DOOption) user {
 	_user.Email = field.NewString(tableName, "email")
 	_user.Password = field.NewString(tableName, "password")
 	_user.Status = field.NewInt32(tableName, "status")
-	_user.IsDeleted = field.NewBool(tableName, "is_deleted")
 	_user.IsAdmin = field.NewBool(tableName, "is_admin")
 
 	_user.fillFieldMap()
@@ -54,9 +55,9 @@ type user struct {
 	userDo
 
 	ALL       field.Asterisk
-	ID        field.Uint
-	CreatedAt field.Int64
-	UpdatedAt field.Int64
+	ID        field.Field
+	CreatedAt field.Time
+	UpdatedAt field.Time
 	DeletedAt field.Field
 	Name      field.String
 	Gender    field.Int
@@ -69,7 +70,6 @@ type user struct {
 	Email     field.String
 	Password  field.String
 	Status    field.Int32
-	IsDeleted field.Bool
 	IsAdmin   field.Bool
 
 	fieldMap map[string]field.Expr
@@ -87,9 +87,9 @@ func (u user) As(alias string) *user {
 
 func (u *user) updateTableName(table string) *user {
 	u.ALL = field.NewAsterisk(table)
-	u.ID = field.NewUint(table, "id")
-	u.CreatedAt = field.NewInt64(table, "created_at")
-	u.UpdatedAt = field.NewInt64(table, "updated_at")
+	u.ID = field.NewField(table, "id")
+	u.CreatedAt = field.NewTime(table, "created_at")
+	u.UpdatedAt = field.NewTime(table, "updated_at")
 	u.DeletedAt = field.NewField(table, "deleted_at")
 	u.Name = field.NewString(table, "name")
 	u.Gender = field.NewInt(table, "gender")
@@ -102,7 +102,6 @@ func (u *user) updateTableName(table string) *user {
 	u.Email = field.NewString(table, "email")
 	u.Password = field.NewString(table, "password")
 	u.Status = field.NewInt32(table, "status")
-	u.IsDeleted = field.NewBool(table, "is_deleted")
 	u.IsAdmin = field.NewBool(table, "is_admin")
 
 	u.fillFieldMap()
@@ -120,7 +119,7 @@ func (u *user) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (u *user) fillFieldMap() {
-	u.fieldMap = make(map[string]field.Expr, 17)
+	u.fieldMap = make(map[string]field.Expr, 16)
 	u.fieldMap["id"] = u.ID
 	u.fieldMap["created_at"] = u.CreatedAt
 	u.fieldMap["updated_at"] = u.UpdatedAt
@@ -136,7 +135,6 @@ func (u *user) fillFieldMap() {
 	u.fieldMap["email"] = u.Email
 	u.fieldMap["password"] = u.Password
 	u.fieldMap["status"] = u.Status
-	u.fieldMap["is_deleted"] = u.IsDeleted
 	u.fieldMap["is_admin"] = u.IsAdmin
 }
 
@@ -212,17 +210,18 @@ type IUserDo interface {
 	UnderlyingDB() *gorm.DB
 	schema.Tabler
 
-	GetUserInfoByUserId(userId uint64) (result *model.User, err error)
+	GetUserInfoByUserId(userId uuid.UUID) (result *model.User, err error)
 	GetUserInfoByEmail(email string) (result *model.User, err error)
+	GetUserGroups(userId uuid.UUID) (result []*model.Group, err error)
 }
 
-// SELECT * FROM @@table WHERE user_id = @userId AND is_deleted is not true
-func (u userDo) GetUserInfoByUserId(userId uint64) (result *model.User, err error) {
+// SELECT * FROM @@table WHERE user_id = @userId
+func (u userDo) GetUserInfoByUserId(userId uuid.UUID) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, userId)
-	generateSQL.WriteString("SELECT * FROM users WHERE user_id = ? AND is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM users WHERE user_id = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = u.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
@@ -231,16 +230,31 @@ func (u userDo) GetUserInfoByUserId(userId uint64) (result *model.User, err erro
 	return
 }
 
-// SELECT * FROM @@table WHERE email = @email AND is_deleted is not true
+// SELECT * FROM @@table WHERE email = @email
 func (u userDo) GetUserInfoByEmail(email string) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, email)
-	generateSQL.WriteString("SELECT * FROM users WHERE email = ? AND is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM users WHERE email = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = u.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON  `group_members`.`user_id`=@userId WHERE `groups`.`id` = `group_members`.`group_id`
+func (u userDo) GetUserGroups(userId uuid.UUID) (result []*model.Group, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, userId)
+	generateSQL.WriteString("SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON `group_members`.`user_id`=? WHERE `groups`.`id` = `group_members`.`group_id` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = u.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
 	err = executeSQL.Error
 
 	return

@@ -4,26 +4,26 @@ import (
 	"core/biz/dal/query"
 	"errors"
 
-	"gorm.io/gorm"
+	"github.com/google/uuid"
 )
 
 var (
 	ErrGroupNotFound = errors.New("group not found")
 )
 
-func GetGroupUserIDs(groupID uint64, userID uint64) (ids []uint64, err error) {
-	group, err := query.Q.Group.Where(query.Group.ID.Eq(uint(groupID))).First()
+func GetGroupUserIDs(groupID uuid.UUID, userID uuid.UUID) (ids []uuid.UUID, err error) {
+	groupMems, err := query.Q.GroupMember.Where(query.GroupMember.GroupID.Eq(groupID)).Find()
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrGroupNotFound
-		}
 		return nil, err
 	}
-	for _, member := range group.Member {
-		if member.ID == uint(userID) {
+	if len(groupMems) == 0 {
+		return nil, ErrGroupNotFound
+	}
+	for _, mem := range groupMems {
+		if mem.UserID == userID {
 			continue
 		}
-		ids = append(ids, uint64(member.ID))
+		ids = append(ids, mem.UserID)
 	}
 	return
 }

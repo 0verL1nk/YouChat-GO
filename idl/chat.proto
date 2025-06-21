@@ -4,7 +4,7 @@ syntax = "proto3";
 
 package chat;
 import "api.proto";
-import public "google/protobuf/timestamp.proto";
+
 enum MessageType {
    TEXT = 0;
    IMAGE = 1;
@@ -65,8 +65,9 @@ message ChatMsgFile {
 
 message ChatMsg {
    // 将 HTTP 请求的 body（或某个 JSON 字段）绑定到 from 字段
-   string from      = 1 [(api.body) = "from"];
-   string to        = 2 [(api.body) = "to"];
+   string id =1 [(api.body) = "id"];
+   string from      = 2 [(api.body) = "from"];
+   string to        = 3 [(api.body) = "to"];
  
    enum Type {
      TEXT  = 0;
@@ -75,27 +76,28 @@ message ChatMsg {
      VIDEO = 3;
      FILE  = 4;
    }
-   Type type        = 3 [(api.body) = "type"];
+   Type type        = 4 [(api.body) = "type"];
  
    // 2000 成功, 5000 失败
-   int32 code       = 4 [(api.body) = "code"];
+   int32 code       = 5 [(api.body) = "code"];
  
    // Unix 时间戳
-   google.protobuf.Timestamp created_at = 5 [(api.body) = "created_at"];
+   int64 created_at = 6 [(api.body) = "created_at"];
  
    // 多态 content，始终映射到同一个 JSON 键 “Content”
    oneof content {
-     string            text  = 6 [(api.body) = "content"];
-     ChatMsgImage      image = 7 [(api.body) = "content"];
-     ChatMsgAudio      audio = 8 [(api.body) = "content"];
-     ChatMsgVideo      video = 9 [(api.body) = "content"];
-     ChatMsgFile       file  = 10[(api.body) = "content"];
+     string            text  = 7 [(api.body) = "content"];
+     ChatMsgImage      image = 8 [(api.body) = "content"];
+     ChatMsgAudio      audio = 9 [(api.body) = "content"];
+     ChatMsgVideo      video = 10 [(api.body) = "content"];
+     ChatMsgFile       file  = 11[(api.body) = "content"];
    }
  }
 // 获取某个聊天的聊天记录
 message GetConversationReq{
-   uint64 GroupID=1[(api.body)="group_id"];
-   google.protobuf.Timestamp After=2[(api.body)="after"];
+   string GroupID=1[(api.body)="group_id"];
+  //  unix时间戳
+   int64 After=2[(api.body)="after"];
    int64 Page=3[(api.body)="page"];
    int64 PageSize=4[(api.body)="page_size"];
 }

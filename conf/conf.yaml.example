@@ -19,17 +19,23 @@ registry:
 # MySQL Database Configuration
 mysql:
   host: "mysql"
-  port: "3306"
+  port: "5432"
   username: "gorm"
   password: "gorm"
   database: "test"
+  tls: "skip-verify"
 
 # Redis Configuration
 redis:
-  address: "localhost:6379"
+  address: "redis:6379"
   password: ""
   username: ""
   db: 0
+
+kafka:
+  address:
+    - "kafka:9092"
+  topic: "chat-msg"
 
 
 oss:
@@ -50,7 +56,7 @@ jwt:
   valid_days: 30
 
 log:
-  path: "./logs/"
+  path: "/app/logs"
   max_size: 50
   max_backups: 5
   max_age: 30

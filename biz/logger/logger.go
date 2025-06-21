@@ -18,7 +18,7 @@ var c = conf.GetConf()
 func ImplyZapLogger() {
 	// 可定制的输出目录。
 	logFilePath := c.LOG.Path
-	if err := os.MkdirAll(logFilePath, 0o777); err != nil {
+	if err := os.MkdirAll(logFilePath, 0o755); err != nil {
 		panic(err)
 	}
 	// 将文件名设置为日期

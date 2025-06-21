@@ -17,6 +17,8 @@ import (
 	"gorm.io/gen/field"
 
 	"gorm.io/plugin/dbresolver"
+
+	"github.com/google/uuid"
 )
 
 func newGroup(db *gorm.DB, opts ...gen.DOOption) group {
@@ -27,19 +29,14 @@ func newGroup(db *gorm.DB, opts ...gen.DOOption) group {
 
 	tableName := _group.groupDo.TableName()
 	_group.ALL = field.NewAsterisk(tableName)
-	_group.ID = field.NewUint(tableName, "id")
+	_group.ID = field.NewField(tableName, "id")
 	_group.CreatedAt = field.NewTime(tableName, "created_at")
 	_group.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_group.DeletedAt = field.NewField(tableName, "deleted_at")
 	_group.GroupName = field.NewString(tableName, "group_name")
-	_group.OwnerId = field.NewUint(tableName, "owner_id")
+	_group.OwnerId = field.NewField(tableName, "owner_id")
 	_group.Avatar = field.NewString(tableName, "avatar")
 	_group.Desc = field.NewString(tableName, "desc")
-	_group.Member = groupManyToManyMember{
-		db: db.Session(&gorm.Session{}),
-
-		RelationField: field.NewRelation("Member", "model.User"),
-	}
 
 	_group.fillFieldMap()
 
@@ -50,15 +47,14 @@ type group struct {
 	groupDo
 
 	ALL       field.Asterisk
-	ID        field.Uint
+	ID        field.Field
 	CreatedAt field.Time
 	UpdatedAt field.Time
 	DeletedAt field.Field
 	GroupName field.String
-	OwnerId   field.Uint
+	OwnerId   field.Field
 	Avatar    field.String
 	Desc      field.String
-	Member    groupManyToManyMember
 
 	fieldMap map[string]field.Expr
 }
@@ -75,12 +71,12 @@ func (g group) As(alias string) *group {
 
 func (g *group) updateTableName(table string) *group {
 	g.ALL = field.NewAsterisk(table)
-	g.ID = field.NewUint(table, "id")
+	g.ID = field.NewField(table, "id")
 	g.CreatedAt = field.NewTime(table, "created_at")
 	g.UpdatedAt = field.NewTime(table, "updated_at")
 	g.DeletedAt = field.NewField(table, "deleted_at")
 	g.GroupName = field.NewString(table, "group_name")
-	g.OwnerId = field.NewUint(table, "owner_id")
+	g.OwnerId = field.NewField(table, "owner_id")
 	g.Avatar = field.NewString(table, "avatar")
 	g.Desc = field.NewString(table, "desc")
 
@@ -99,7 +95,7 @@ func (g *group) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (g *group) fillFieldMap() {
-	g.fieldMap = make(map[string]field.Expr, 9)
+	g.fieldMap = make(map[string]field.Expr, 8)
 	g.fieldMap["id"] = g.ID
 	g.fieldMap["created_at"] = g.CreatedAt
 	g.fieldMap["updated_at"] = g.UpdatedAt
@@ -108,7 +104,6 @@ func (g *group) fillFieldMap() {
 	g.fieldMap["owner_id"] = g.OwnerId
 	g.fieldMap["avatar"] = g.Avatar
 	g.fieldMap["desc"] = g.Desc
-
 }
 
 func (g group) clone(db *gorm.DB) group {
@@ -119,77 +114,6 @@ func (g group) clone(db *gorm.DB) group {
 func (g group) replaceDB(db *gorm.DB) group {
 	g.groupDo.ReplaceDB(db)
 	return g
-}
-
-type groupManyToManyMember struct {
-	db *gorm.DB
-
-	field.RelationField
-}
-
-func (a groupManyToManyMember) Where(conds ...field.Expr) *groupManyToManyMember {
-	if len(conds) == 0 {
-		return &a
-	}
-
-	exprs := make([]clause.Expression, 0, len(conds))
-	for _, cond := range conds {
-		exprs = append(exprs, cond.BeCond().(clause.Expression))
-	}
-	a.db = a.db.Clauses(clause.Where{Exprs: exprs})
-	return &a
-}
-
-func (a groupManyToManyMember) WithContext(ctx context.Context) *groupManyToManyMember {
-	a.db = a.db.WithContext(ctx)
-	return &a
-}
-
-func (a groupManyToManyMember) Session(session *gorm.Session) *groupManyToManyMember {
-	a.db = a.db.Session(session)
-	return &a
-}
-
-func (a groupManyToManyMember) Model(m *model.Group) *groupManyToManyMemberTx {
-	return &groupManyToManyMemberTx{a.db.Model(m).Association(a.Name())}
-}
-
-type groupManyToManyMemberTx struct{ tx *gorm.Association }
-
-func (a groupManyToManyMemberTx) Find() (result []*model.User, err error) {
-	return result, a.tx.Find(&result)
-}
-
-func (a groupManyToManyMemberTx) Append(values ...*model.User) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Append(targetValues...)
-}
-
-func (a groupManyToManyMemberTx) Replace(values ...*model.User) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Replace(targetValues...)
-}
-
-func (a groupManyToManyMemberTx) Delete(values ...*model.User) (err error) {
-	targetValues := make([]interface{}, len(values))
-	for i, v := range values {
-		targetValues[i] = v
-	}
-	return a.tx.Delete(targetValues...)
-}
-
-func (a groupManyToManyMemberTx) Clear() error {
-	return a.tx.Clear()
-}
-
-func (a groupManyToManyMemberTx) Count() int64 {
-	return a.tx.Count()
 }
 
 type groupDo struct{ gen.DO }
@@ -254,17 +178,18 @@ type IGroupDo interface {
 	UnderlyingDB() *gorm.DB
 	schema.Tabler
 
-	GetUserInfoByUserId(userId uint64) (result *model.User, err error)
+	GetUserInfoByUserId(userId uuid.UUID) (result *model.User, err error)
 	GetUserInfoByEmail(email string) (result *model.User, err error)
+	GetUserGroups(userId uuid.UUID) (result []*model.Group, err error)
 }
 
-// SELECT * FROM @@table WHERE user_id = @userId AND is_deleted is not true
-func (g groupDo) GetUserInfoByUserId(userId uint64) (result *model.User, err error) {
+// SELECT * FROM @@table WHERE user_id = @userId
+func (g groupDo) GetUserInfoByUserId(userId uuid.UUID) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, userId)
-	generateSQL.WriteString("SELECT * FROM groups WHERE user_id = ? AND is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM groups WHERE user_id = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = g.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
@@ -273,16 +198,31 @@ func (g groupDo) GetUserInfoByUserId(userId uint64) (result *model.User, err err
 	return
 }
 
-// SELECT * FROM @@table WHERE email = @email AND is_deleted is not true
+// SELECT * FROM @@table WHERE email = @email
 func (g groupDo) GetUserInfoByEmail(email string) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, email)
-	generateSQL.WriteString("SELECT * FROM groups WHERE email = ? AND is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM groups WHERE email = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = g.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON  `group_members`.`user_id`=@userId WHERE `groups`.`id` = `group_members`.`group_id`
+func (g groupDo) GetUserGroups(userId uuid.UUID) (result []*model.Group, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, userId)
+	generateSQL.WriteString("SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON `group_members`.`user_id`=? WHERE `groups`.`id` = `group_members`.`group_id` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = g.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
 	err = executeSQL.Error
 
 	return

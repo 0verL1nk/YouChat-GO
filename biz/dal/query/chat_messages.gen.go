@@ -17,6 +17,8 @@ import (
 	"gorm.io/gen/field"
 
 	"gorm.io/plugin/dbresolver"
+
+	"github.com/google/uuid"
 )
 
 func newChatMessage(db *gorm.DB, opts ...gen.DOOption) chatMessage {
@@ -27,14 +29,14 @@ func newChatMessage(db *gorm.DB, opts ...gen.DOOption) chatMessage {
 
 	tableName := _chatMessage.chatMessageDo.TableName()
 	_chatMessage.ALL = field.NewAsterisk(tableName)
-	_chatMessage.ID = field.NewUint(tableName, "id")
+	_chatMessage.ID = field.NewField(tableName, "id")
 	_chatMessage.CreatedAt = field.NewTime(tableName, "created_at")
 	_chatMessage.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_chatMessage.DeletedAt = field.NewField(tableName, "deleted_at")
 	_chatMessage.MsgType = field.NewUint8(tableName, "msg_type")
 	_chatMessage.Content = field.NewString(tableName, "content")
-	_chatMessage.FromId = field.NewUint(tableName, "from_id")
-	_chatMessage.ToId = field.NewUint(tableName, "to_id")
+	_chatMessage.FromId = field.NewField(tableName, "from_id")
+	_chatMessage.ToId = field.NewField(tableName, "to_id")
 
 	_chatMessage.fillFieldMap()
 
@@ -45,14 +47,14 @@ type chatMessage struct {
 	chatMessageDo
 
 	ALL       field.Asterisk
-	ID        field.Uint
+	ID        field.Field
 	CreatedAt field.Time
 	UpdatedAt field.Time
 	DeletedAt field.Field
 	MsgType   field.Uint8
 	Content   field.String
-	FromId    field.Uint
-	ToId      field.Uint
+	FromId    field.Field
+	ToId      field.Field
 
 	fieldMap map[string]field.Expr
 }
@@ -69,14 +71,14 @@ func (c chatMessage) As(alias string) *chatMessage {
 
 func (c *chatMessage) updateTableName(table string) *chatMessage {
 	c.ALL = field.NewAsterisk(table)
-	c.ID = field.NewUint(table, "id")
+	c.ID = field.NewField(table, "id")
 	c.CreatedAt = field.NewTime(table, "created_at")
 	c.UpdatedAt = field.NewTime(table, "updated_at")
 	c.DeletedAt = field.NewField(table, "deleted_at")
 	c.MsgType = field.NewUint8(table, "msg_type")
 	c.Content = field.NewString(table, "content")
-	c.FromId = field.NewUint(table, "from_id")
-	c.ToId = field.NewUint(table, "to_id")
+	c.FromId = field.NewField(table, "from_id")
+	c.ToId = field.NewField(table, "to_id")
 
 	c.fillFieldMap()
 
@@ -176,17 +178,18 @@ type IChatMessageDo interface {
 	UnderlyingDB() *gorm.DB
 	schema.Tabler
 
-	GetUserInfoByUserId(userId uint64) (result *model.User, err error)
+	GetUserInfoByUserId(userId uuid.UUID) (result *model.User, err error)
 	GetUserInfoByEmail(email string) (result *model.User, err error)
+	GetUserGroups(userId uuid.UUID) (result []*model.Group, err error)
 }
 
-// SELECT * FROM @@table WHERE user_id = @userId AND is_deleted is not true
-func (c chatMessageDo) GetUserInfoByUserId(userId uint64) (result *model.User, err error) {
+// SELECT * FROM @@table WHERE user_id = @userId
+func (c chatMessageDo) GetUserInfoByUserId(userId uuid.UUID) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, userId)
-	generateSQL.WriteString("SELECT * FROM chat_messages WHERE user_id = ? AND is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM chat_messages WHERE user_id = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = c.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
@@ -195,16 +198,31 @@ func (c chatMessageDo) GetUserInfoByUserId(userId uint64) (result *model.User, e
 	return
 }
 
-// SELECT * FROM @@table WHERE email = @email AND is_deleted is not true
+// SELECT * FROM @@table WHERE email = @email
 func (c chatMessageDo) GetUserInfoByEmail(email string) (result *model.User, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, email)
-	generateSQL.WriteString("SELECT * FROM chat_messages WHERE email = ? AND is_deleted is not true ")
+	generateSQL.WriteString("SELECT * FROM chat_messages WHERE email = ? ")
 
 	var executeSQL *gorm.DB
 	executeSQL = c.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
+	err = executeSQL.Error
+
+	return
+}
+
+// SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON  `group_members`.`user_id`=@userId WHERE `groups`.`id` = `group_members`.`group_id`
+func (c chatMessageDo) GetUserGroups(userId uuid.UUID) (result []*model.Group, err error) {
+	var params []interface{}
+
+	var generateSQL strings.Builder
+	params = append(params, userId)
+	generateSQL.WriteString("SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON `group_members`.`user_id`=? WHERE `groups`.`id` = `group_members`.`group_id` ")
+
+	var executeSQL *gorm.DB
+	executeSQL = c.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert
 	err = executeSQL.Error
 
 	return

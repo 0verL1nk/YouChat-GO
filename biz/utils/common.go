@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"net/mail"
 	"strconv"
 	"time"
 
@@ -73,19 +74,27 @@ func Atoi64(s string) int64 {
 	return 0
 }
 
-func ParseTimestamp(t *timestamppb.Timestamp, def time.Time) time.Time {
-	if t == nil {
+func ParseUnixTime(ts int64, def time.Time) time.Time {
+	if ts <= 0 {
 		return def
 	}
-	return time.Unix(t.GetSeconds(), 0).In(time.Local)
+	return time.Unix(ts, 0).In(time.Local)
 }
 
-func GetDefaultPageParam(page, pageSize int) (int, int) {
+func GetDefaultPageParam(page, pageSize int64) (int, int) {
 	if page <= 0 {
 		page = 1
 	}
 	if pageSize <= 0 {
 		pageSize = 20
 	}
-	return page, pageSize
+	return int(page), int(pageSize)
+}
+
+// 仅校验格式
+func IsValidEmail(email string) bool {
+	if _, err := mail.ParseAddress(email); err != nil {
+		return false
+	}
+	return true
 }

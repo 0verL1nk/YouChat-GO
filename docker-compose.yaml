@@ -3,18 +3,12 @@ services:
     build: .
     ports:
       - 5050:5050
-    environment:
-      - APP_HERTZ_ADDRESS=":5050"
-      - APP_MYSQL_HOST=mysql
-      - APP_MYSQL_PORT=3306
-      - APP_MYSQL_DATABASE=gorm
-      - APP_MYSQL_USERNAME=gorm
-      - APP_MYSQL_PASSWORD=gorm
-      - APP_REDIS_ADDRESS=redis:6379
     depends_on:
       mysql:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     volumes:
       - ./logs:/bin/logs
@@ -41,13 +35,54 @@ services:
   redis:
     image: 'redis:latest'
     ports:
-      - 6379:6379
+      - 6552:6379
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
       start_period: 10s
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
 
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"  # 内部通信端口（供容器内客户端用）
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    depends_on:
+      - zookeeper
+
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8653:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+    depends_on:
+      - kafka
 volumes:
   mysql_data:

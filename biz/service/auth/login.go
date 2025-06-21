@@ -6,6 +6,7 @@ import (
 
 	"core/biz/dal/redis"
 	"core/biz/jwt"
+	"core/biz/service/user"
 	"core/biz/utils"
 	auth "core/hertz_gen/auth"
 	"fmt"
@@ -42,7 +43,7 @@ func (h *LoginService) Run(req *auth.LoginReq) (resp *auth.LoginResp, err error)
 			return &auth.LoginResp{}, errors.New("验证码错误")
 		}
 	}
-	user, err := CheckUserState(h.Context, req.Email)
+	user, err := user.CheckUserStateByEmail(h.Context, req.Email)
 	if err != nil {
 		return &auth.LoginResp{}, err
 	}
@@ -50,7 +51,7 @@ func (h *LoginService) Run(req *auth.LoginReq) (resp *auth.LoginResp, err error)
 	if err != nil {
 		return &auth.LoginResp{}, ErrValidatePwd
 	}
-	token, expireAt, err := jwt.CreateToken(h.Context, uint64(user.ID))
+	token, expireAt, err := jwt.CreateToken(h.Context, user.ID)
 	if err != nil {
 		hlog.Error("create token failed:", err)
 		return &auth.LoginResp{}, ErrCreateToken

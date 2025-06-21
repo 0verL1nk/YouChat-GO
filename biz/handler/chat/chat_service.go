@@ -41,18 +41,18 @@ func ConnectChatWS(ctx context.Context, c *app.RequestContext) {
 			hlog.Error("websocket upgrade returned nil conn")
 			return
 		}
-		id := uuid.New().String()
+		id := uuid.New()
 		client := &socket.Client{
 			ID:     id,
-			UserID: uint64(tokenClaim.UserId),
+			UserID: tokenClaim.UserId,
 			Conn:   c,
-			Send:   make(chan []byte),
+			Send:   make(chan []byte, 1024),
 		}
 		socket.SocketServer.Register <- client
 		// 启动读写
-		go client.Write()
-		// 这个read用来阻塞协程
-		client.Read()
+		go client.Read()
+		client.Write()
+		// 这个用来阻塞线程
 	}); err != nil {
 		hlog.Debug("ws connect err: ", err)
 		return
@@ -66,14 +66,14 @@ func GetConversation(ctx context.Context, c *app.RequestContext) {
 	var req chat.GetConversationReq
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		utils.SendErrResponse(ctx, c, consts.StatusOK, err)
+		utils.SendErrResponse(ctx, c, consts.StatusBadRequest, err)
 		return
 	}
 
 	resp, err := service.NewGetConversationService(ctx, c).Run(&req)
 
 	if err != nil {
-		utils.SendErrResponse(ctx, c, consts.StatusOK, err)
+		utils.SendErrResponse(ctx, c, consts.StatusInternalServerError, err)
 		return
 	}
 	utils.SendSuccessResponse(ctx, c, consts.StatusOK, resp)

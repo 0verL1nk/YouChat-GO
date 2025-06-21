@@ -17,8 +17,8 @@ var c = conf.GetConf()
 func main() {
 	// connect to mysql manually to check and create database
 	//dsn := "%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Local"
-	dsn := "%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Local&tls=true"
-	db, err := gorm.Open(mysqldb.Open(fmt.Sprintf(dsn, c.MySQL.Username, c.MySQL.Password, c.MySQL.Host, c.MySQL.Port)),
+	dsn := "%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Local&tls=%s"
+	db, err := gorm.Open(mysqldb.Open(fmt.Sprintf(dsn, c.MySQL.Username, c.MySQL.Password, c.MySQL.Host, c.MySQL.Port, c.MySQL.TLS)),
 		&gorm.Config{
 			PrepareStmt:            true,
 			SkipDefaultTransaction: true,
@@ -41,6 +41,7 @@ func main() {
 
 	err = mysql.DB.Set("gorm:table_options", "CHARSET=utf8mb4").AutoMigrate(model.AllModels...)
 	if err != nil {
+		hlog.Error("Failed to migrate database:", err)
 		panic(err)
 	}
 }

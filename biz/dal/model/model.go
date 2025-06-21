@@ -16,32 +16,49 @@ var AllModels = []interface{}{
 	&GroupMember{},
 }
 
+type BaseModel struct {
+	ID        uuid.UUID `gorm:"type:char(36);primarykey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+// BeforeCreate 钩子函数：在创建记录前生成 UUID
+func (b *BaseModel) BeforeCreate(tx *gorm.DB) (err error) {
+	if b.ID == uuid.Nil {
+		b.ID = uuid.New()
+	}
+	if b.CreatedAt.IsZero() {
+		b.CreatedAt = time.Now()
+	}
+	if b.UpdatedAt.IsZero() {
+		b.UpdatedAt = time.Now()
+	}
+	return nil
+}
+
 type User struct {
-	gorm.Model
-	Name      string `gorm:"type:varchar(255);default:'';column:name" json:"name"`
-	Gender    int    `gorm:"type:int;default:0;column:gender" json:"gender"` // 0: 默认，可根据业务调整
-	Language  string `gorm:"type:varchar(255);default:'';column:language" json:"language"`
-	City      string `gorm:"type:varchar(255);default:'';column:city" json:"city"`
-	Province  string `gorm:"type:varchar(255);default:'';column:province" json:"province"`
-	Country   string `gorm:"type:varchar(255);default:'';column:country" json:"country"`
-	Avatar    string `gorm:"type:varchar(1024);default:'';column:avatar" json:"avatar"`
-	Phone     string `gorm:"type:varchar(255);default:'';column:phone" json:"phone"`
-	Email     string `gorm:"type:varchar(255);default:'';column:email" json:"email"`
-	Password  string `gorm:"type:varchar(255);default:'';column:password" json:"password"`
-	Status    int32  `gorm:"type:int;default:0;column:status" json:"status"` // 0: normal, 1: admin, 2: baned
-	CreatedAt int64  `gorm:"column:created_at;autoCreateTime" json:"created_at"`
-	UpdatedAt int64  `gorm:"column:updated_at;autoUpdateTime" json:"updated_at"`
-	IsDeleted bool   `gorm:"column:is_deleted;default:false" json:"is_deleted"`
-	IsAdmin   bool   `gorm:"column:is_admin;default:false" json:"is_admin"`
+	BaseModel
+	Name     string `gorm:"type:varchar(255);default:'';column:name" json:"name"`
+	Gender   int    `gorm:"type:int;default:0;column:gender" json:"gender"` // 0: 默认，可根据业务调整
+	Language string `gorm:"type:varchar(255);default:'';column:language" json:"language"`
+	City     string `gorm:"type:varchar(255);default:'';column:city" json:"city"`
+	Province string `gorm:"type:varchar(255);default:'';column:province" json:"province"`
+	Country  string `gorm:"type:varchar(255);default:'';column:country" json:"country"`
+	Avatar   string `gorm:"type:varchar(1024);default:'';column:avatar" json:"avatar"`
+	Phone    string `gorm:"type:varchar(255);default:'';column:phone" json:"phone"`
+	Email    string `gorm:"type:varchar(255);default:'';column:email" json:"email"`
+	Password string `gorm:"type:varchar(255);default:'';column:password" json:"password"`
+	Status   int32  `gorm:"type:int;default:0;column:status" json:"status"` // 0: normal, 1: admin, 2: baned
+	IsAdmin  bool   `gorm:"column:is_admin;default:false" json:"is_admin"`
 }
 
 type Group struct {
-	gorm.Model
-	GroupName string  `gorm:"type:varchar(255);default:'';column:group_name" json:"groupName"`
-	OwnerId   uint    `gorm:"type:bigint;not null;column:owner_id" json:"ownerId"`
-	Avatar    string  `gorm:"type:varchar(1024);default:'';column:avatar" json:"avatar"`
-	Member    []*User `gorm:"many2many:group_member;"`
-	Desc      string  `gorm:"type:varchar(1024);default:'';column:desc" json:"desc"` //群组简介
+	BaseModel
+	GroupName string    `gorm:"type:varchar(255);default:'';column:group_name" json:"groupName"`
+	OwnerId   uuid.UUID `gorm:"type:char(36);not null;column:owner_id" json:"ownerId"`
+	Avatar    string    `gorm:"type:varchar(1024);default:'';column:avatar" json:"avatar"`
+	Desc      string    `gorm:"type:varchar(1024);default:'';column:desc" json:"desc"` //群组简介
 }
 
 type GroupType uint8
@@ -103,29 +120,30 @@ var Str2GroupRole = map[string]GroupRole{
 }
 
 type GroupMember struct {
-	gorm.Model
+	BaseModel
 	GroupType GroupType `gorm:"type:int;not null;default:0;column:group_type" json:"groupType"` // 群组类型
-	GroupID   uint      `gorm:"type:bigint;not null;column:group_id" json:"groupId"`
-	UserID    uint      `gorm:"type:bigint;not null;column:user_id" json:"userId"`
-	Role      GroupRole `gorm:"type:int;not null;default:0;column:role" json:"role"` // 群组角色 0: 群主, 1: 管理员, 2: 成员
-	Status    int32     `gorm:"type:int;default:0;column:status" json:"status"`      // 0: normal, 1: admin, 2: baned
+	GroupID   uuid.UUID `gorm:"type:char(36);not null;column:group_id" json:"groupId"`
+	UserID    uuid.UUID `gorm:"type:char(36);not null;column:user_id" json:"userId"`
+	Group     Group     `gorm:"foreignKey:GroupID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"group"` // 群组信息
+	Role      GroupRole `gorm:"type:int;not null;default:0;column:role" json:"role"`                                        // 群组角色 0: 群主, 1: 管理员, 2: 成员
+	Status    uint8     `gorm:"type:int;default:0;column:status" json:"status"`                                             // 0: normal, 1: admin, 2: baned
 }
 
 type Conversation struct {
-	gorm.Model
-	UserID      uint `gorm:"type:bigint;column:user_id"`
-	GroupID     uint `gorm:"type:bigint;column:group_id"`
+	BaseModel
+	UserID      uuid.UUID `gorm:"type:char(36);column:user_id"`
+	GroupID     uuid.UUID `gorm:"type:char(36);column:group_id"`
 	LastMsgTime time.Time
-	UnReadNum   uint
+	UnReadNum   uint64
 }
 
 type ChatMessage struct {
-	gorm.Model
+	BaseModel
 	MsgType MessageType `gorm:"type:int;not null;default:0;column:msg_type" json:"msg_type"`
 	Content string      `gorm:"type:varchar(10240);default:'';column:content" json:"content"`
-	FromId  uint        `gorm:"type:bigint;not null"`
+	FromId  uuid.UUID   `gorm:"type:char(36);not null"`
 	// 找群组消息直接查ToID
-	ToId uint `gorm:"type:bigint;not null"`
+	ToId uuid.UUID `gorm:"type:char(36);not null"`
 }
 
 type MessageType uint8
@@ -164,8 +182,8 @@ var Str2MsgType = map[string]MessageType{
 }
 
 type File struct {
-	gorm.Model
-	UserId         uint64    `gorm:"type:bigint;not null"`
+	BaseModel
+	UserId         uuid.UUID `gorm:"type:char(36);not null"`
 	SID            uuid.UUID `gorm:"column:sid"`
 	FileOriginName string    `gorm:"type:varchar(255);not null"`
 	Key            string    `gorm:"type:varchar(255);not null"`
@@ -180,9 +198,12 @@ type Querier interface {
 	// CreateUser(user *User) error
 	// ListUsers() ([]*User, error)
 
-	// SELECT * FROM @@table WHERE user_id = @userId AND is_deleted is not true
-	GetUserInfoByUserId(userId uint64) (*User, error)
+	// SELECT * FROM @@table WHERE user_id = @userId
+	GetUserInfoByUserId(userId uuid.UUID) (*User, error)
 
-	// SELECT * FROM @@table WHERE email = @email AND is_deleted is not true
+	// SELECT * FROM @@table WHERE email = @email
 	GetUserInfoByEmail(email string) (*User, error)
+
+	// SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON  `group_members`.`user_id`=@userId WHERE `groups`.`id` = `group_members`.`group_id`
+	GetUserGroups(userId uuid.UUID) ([]*Group, error)
 }
