@@ -1,11 +1,7 @@
-
-
-
-          
 # YouChat Backend GO 💬
 
 ## 项目介绍
-YouChat Backend GO 是一个基于 <mcurl name="Hertz" url="https://github.com/cloudwego/hertz/"></mcurl> 框架开发的聊天应用后端服务。本项目采用现代化的技术栈和最佳实践，提供高性能、可扩展的即时通讯解决方案。🚀
+YouChat Backend GO 是一个基于 <mcurl name="Hertz" url="https://github.com/cloudwego/hertz/">Hertz</mcurl> 框架开发的聊天应用后端服务。本项目采用现代化的技术栈和最佳实践，提供高性能、可扩展的即时通讯解决方案。🚀
 
 ## 主要特性 ✨
 - 基于高性能的 Hertz 框架构建
@@ -95,6 +91,21 @@ sh output/bootstrap.sh
 # 使用 docker-compose 启动所有服务
 docker-compose up -d
 ```
+
+## 已实现功能
+- [x] 用户注册与登录
+- [x] 群组创建与加入
+- [x] 消息发送（单聊、群聊）
+- [x] WebSocket实时通信
+
+## 开发计划
+- [ ] 用户搜索功能
+- [ ] 好友添加功能
+- [ ] 群组管理（删除、修改）
+- [ ] 消息撤回功能
+- [ ] 通知系统
+- [ ] 文件上传/下载
+- [ ] 其他类型消息的收发
 
 ## 开发指南 🧑‍💻
 
