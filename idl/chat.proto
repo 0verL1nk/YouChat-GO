@@ -5,12 +5,6 @@ syntax = "proto3";
 package chat;
 import "api.proto";
 
-enum MessageType {
-   TEXT = 0;
-   IMAGE = 1;
-   FILE = 2;
-   SYSTEM = 3;
- }
 
 // message ChatMsg{
 //    int64 From=1[(api.body)="from"];
@@ -27,8 +21,6 @@ message ConnectChatWSReq{
 message ConnectChatWSResp{
    
 }
-
-
 
 message ChatMsgImage {
   string image_name = 1;   // 对应 TS 的 ImageName
@@ -48,17 +40,16 @@ message ChatMsgVideo {
   string cover      = 3;   // base64 缩略图
   string length     = 4;
 }
-
+enum FileType {
+  PDF    = 0;
+  WORD   = 1;
+  EXE    = 2;
+  TXT    = 3;
+  OTHERS = 4;
+}
 message ChatMsgFile {
   string url       = 1;
   string file_name = 2;
-  enum FileType {
-    PDF    = 0;
-    WORD   = 1;
-    EXE    = 2;
-    TXT    = 3;
-    OTHERS = 4;
-  }
   FileType file_type = 3;
   string file_size  = 4;
 }
@@ -68,16 +59,7 @@ message ChatMsg {
    string id =1 [(api.body) = "id"];
    string from      = 2 [(api.body) = "from"];
    string to        = 3 [(api.body) = "to"];
- 
-   enum Type {
-     TEXT  = 0;
-     IMAGE = 1;
-     AUDIO = 2;
-     VIDEO = 3;
-     FILE  = 4;
-   }
-   Type type        = 4 [(api.body) = "type"];
- 
+   int32 type        = 4 [(api.body) = "type"];
    // 2000 成功, 5000 失败
    int32 code       = 5 [(api.body) = "code"];
  

@@ -29,3 +29,8 @@ func _searchgroupMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _joingroupMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

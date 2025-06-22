@@ -39,11 +39,24 @@ message SearchGroupResp{
     int64 total = 4 [(api.body) = "total"]; // 总记录数
 }
 
+message JoinGroupReq {
+    string group_id = 1 [(api.body) = "group_id"]; // 群组ID
+    string desc = 2 [(api.body) = "desc"]; // 加入群组的描述
+}
+
+
+message JoinGroupResp {
+    string group_id = 1 [(api.body) = "group_id"]; // 加入成功的群组ID
+}
+
 service GroupService {
     rpc CreateGroup(CreateGroupReq) returns (CreateGroupResp) {
         option (api.post) = "/group/create";
     }
     rpc SearchGroup(SearchGroupReq) returns (SearchGroupResp) {
         option (api.post) = "/group/search";
+    }
+    rpc JoinGroup(JoinGroupReq) returns (JoinGroupResp) {
+        option (api.post) = "/group/join";
     }
 }

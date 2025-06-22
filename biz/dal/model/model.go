@@ -55,10 +55,11 @@ type User struct {
 
 type Group struct {
 	BaseModel
-	GroupName string    `gorm:"type:varchar(255);default:'';column:group_name" json:"groupName"`
-	OwnerId   uuid.UUID `gorm:"type:char(36);not null;column:owner_id" json:"ownerId"`
-	Avatar    string    `gorm:"type:varchar(1024);default:'';column:avatar" json:"avatar"`
-	Desc      string    `gorm:"type:varchar(1024);default:'';column:desc" json:"desc"` //群组简介
+	GroupName string      `gorm:"type:varchar(255);default:'';column:group_name" json:"groupName"`
+	OwnerId   uuid.UUID   `gorm:"type:char(36);not null;column:owner_id" json:"ownerId"`
+	Avatar    string      `gorm:"type:varchar(1024);default:'';column:avatar" json:"avatar"`
+	Desc      string      `gorm:"type:varchar(1024);default:'';column:desc" json:"desc"`   //群组简介
+	Status    GroupStatus `gorm:"type:int;not null;default:0;column:status" json:"status"` // 群组状态 0: normal, 1: closed, 2: deleted, 3: banned
 }
 
 type GroupType uint8
@@ -117,6 +118,37 @@ var Str2GroupRole = map[string]GroupRole{
 	"owner":  GroupRoleOwner,
 	"admin":  GroupRoleAdmin,
 	"member": GroupRoleMember,
+}
+
+type GroupStatus uint8
+
+const (
+	GroupStatusNormal  GroupStatus = iota // 正常状态
+	GroupStatusClosed                     // 已关闭
+	GroupStatusDeleted                    // 已删除
+	GroupStatusBanned                     // 已封禁
+)
+
+func (g GroupStatus) String() string {
+	switch g {
+	case GroupStatusNormal:
+		return "normal"
+	case GroupStatusClosed:
+		return "closed"
+	case GroupStatusDeleted:
+		return "deleted"
+	case GroupStatusBanned:
+		return "banned"
+	default:
+		return "unknown"
+	}
+}
+
+var Str2GroupStatus = map[string]GroupStatus{
+	"normal":  GroupStatusNormal,
+	"closed":  GroupStatusClosed,
+	"deleted": GroupStatusDeleted,
+	"banned":  GroupStatusBanned,
 }
 
 type GroupMember struct {
@@ -204,6 +236,6 @@ type Querier interface {
 	// SELECT * FROM @@table WHERE email = @email
 	GetUserInfoByEmail(email string) (*User, error)
 
-	// SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON  `group_members`.`user_id`=@userId WHERE `groups`.`id` = `group_members`.`group_id`
+	// SELECT `groups`.* FROM `groups` JOIN `group_members` ON  `group_members`.`user_id`=@userId WHERE `groups`.`id` = `group_members`.`group_id`
 	GetUserGroups(userId uuid.UUID) ([]*Group, error)
 }

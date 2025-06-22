@@ -59,14 +59,14 @@ func AddFriend(ctx context.Context, c *app.RequestContext) {
 	var req user.AddFriendReq
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		utils.SendErrResponse(ctx, c, consts.StatusOK, err)
+		utils.SendErrResponse(ctx, c, consts.StatusBadRequest, err)
 		return
 	}
 
 	resp, err := service.NewAddFriendService(ctx, c).Run(&req)
 
 	if err != nil {
-		utils.SendErrResponse(ctx, c, consts.StatusOK, err)
+		utils.SendErrResponse(ctx, c, consts.StatusInternalServerError, err)
 		return
 	}
 	utils.SendSuccessResponse(ctx, c, consts.StatusOK, resp)
@@ -79,14 +79,14 @@ func GetUserContacts(ctx context.Context, c *app.RequestContext) {
 	var req user.GetUserContactsReq
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		utils.SendErrResponse(ctx, c, consts.StatusOK, err)
+		utils.SendErrResponse(ctx, c, consts.StatusBadRequest, err)
 		return
 	}
 
 	resp, err := service.NewGetUserContactsService(ctx, c).Run(&req)
 
 	if err != nil {
-		utils.SendErrResponse(ctx, c, consts.StatusOK, err)
+		utils.SendErrResponse(ctx, c, consts.StatusInternalServerError, err)
 		return
 	}
 	utils.SendSuccessResponse(ctx, c, consts.StatusOK, resp)

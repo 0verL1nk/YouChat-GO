@@ -14,7 +14,6 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	"github.com/google/uuid"
 	"github.com/hertz-contrib/websocket"
 )
 
@@ -41,13 +40,7 @@ func ConnectChatWS(ctx context.Context, c *app.RequestContext) {
 			hlog.Error("websocket upgrade returned nil conn")
 			return
 		}
-		id := uuid.New()
-		client := &socket.Client{
-			ID:     id,
-			UserID: tokenClaim.UserId,
-			Conn:   c,
-			Send:   make(chan []byte, 1024),
-		}
+		client := socket.NewClient(c, tokenClaim.UserId)
 		socket.SocketServer.Register <- client
 		// 启动读写
 		go client.Read()

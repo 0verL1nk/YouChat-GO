@@ -37,6 +37,7 @@ func newGroup(db *gorm.DB, opts ...gen.DOOption) group {
 	_group.OwnerId = field.NewField(tableName, "owner_id")
 	_group.Avatar = field.NewString(tableName, "avatar")
 	_group.Desc = field.NewString(tableName, "desc")
+	_group.Status = field.NewUint8(tableName, "status")
 
 	_group.fillFieldMap()
 
@@ -55,6 +56,7 @@ type group struct {
 	OwnerId   field.Field
 	Avatar    field.String
 	Desc      field.String
+	Status    field.Uint8
 
 	fieldMap map[string]field.Expr
 }
@@ -79,6 +81,7 @@ func (g *group) updateTableName(table string) *group {
 	g.OwnerId = field.NewField(table, "owner_id")
 	g.Avatar = field.NewString(table, "avatar")
 	g.Desc = field.NewString(table, "desc")
+	g.Status = field.NewUint8(table, "status")
 
 	g.fillFieldMap()
 
@@ -95,7 +98,7 @@ func (g *group) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (g *group) fillFieldMap() {
-	g.fieldMap = make(map[string]field.Expr, 8)
+	g.fieldMap = make(map[string]field.Expr, 9)
 	g.fieldMap["id"] = g.ID
 	g.fieldMap["created_at"] = g.CreatedAt
 	g.fieldMap["updated_at"] = g.UpdatedAt
@@ -104,6 +107,7 @@ func (g *group) fillFieldMap() {
 	g.fieldMap["owner_id"] = g.OwnerId
 	g.fieldMap["avatar"] = g.Avatar
 	g.fieldMap["desc"] = g.Desc
+	g.fieldMap["status"] = g.Status
 }
 
 func (g group) clone(db *gorm.DB) group {
@@ -213,13 +217,13 @@ func (g groupDo) GetUserInfoByEmail(email string) (result *model.User, err error
 	return
 }
 
-// SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON  `group_members`.`user_id`=@userId WHERE `groups`.`id` = `group_members`.`group_id`
+// SELECT `groups`.* FROM `groups` JOIN `group_members` ON  `group_members`.`user_id`=@userId WHERE `groups`.`id` = `group_members`.`group_id`
 func (g groupDo) GetUserGroups(userId uuid.UUID) (result []*model.Group, err error) {
 	var params []interface{}
 
 	var generateSQL strings.Builder
 	params = append(params, userId)
-	generateSQL.WriteString("SELECT `groups`.`id`,`groups`.`group_name`,`groups`.`owner_id`,`groups`.`avatar`,`groups`.`desc` FROM `groups` JOIN `group_members` ON `group_members`.`user_id`=? WHERE `groups`.`id` = `group_members`.`group_id` ")
+	generateSQL.WriteString("SELECT `groups`.* FROM `groups` JOIN `group_members` ON `group_members`.`user_id`=? WHERE `groups`.`id` = `group_members`.`group_id` ")
 
 	var executeSQL *gorm.DB
 	executeSQL = g.UnderlyingDB().Raw(generateSQL.String(), params...).Find(&result) // ignore_security_alert

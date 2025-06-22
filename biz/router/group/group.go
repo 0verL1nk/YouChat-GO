@@ -20,6 +20,7 @@ func Register(r *server.Hertz) {
 	{
 		_group := root.Group("/group", _groupMw()...)
 		_group.POST("/create", append(_creategroupMw(), group.CreateGroup)...)
+		_group.POST("/join", append(_joingroupMw(), group.JoinGroup)...)
 		_group.POST("/search", append(_searchgroupMw(), group.SearchGroup)...)
 	}
 }

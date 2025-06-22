@@ -63,7 +63,7 @@ func (h *GetConversationService) Run(req *chat.GetConversationReq) (resp *chat.G
 	// 获取会话数量
 	q := query.ChatMessage.WithContext(h.Context).Where(query.ChatMessage.ToId.Eq(groupID))
 	msgs, count, err := q.
-		Order(query.ChatMessage.CreatedAt.Asc()).
+		Order(query.ChatMessage.CreatedAt.Desc()).
 		Where(query.ChatMessage.CreatedAt.Gt(after)).
 		FindByPage((page-1)*pageSize, pageSize)
 	if err != nil {
@@ -101,7 +101,7 @@ func constructConversationResponse(msgs []*model.ChatMessage) (*chat.GetConversa
 			Id:        msg.ID.String(),
 			From:      msg.FromId.String(),
 			To:        msg.ToId.String(),
-			Type:      chat.ChatMsg_Type(msg.MsgType),
+			Type:      int32(msg.MsgType),
 			CreatedAt: msg.CreatedAt.Unix(),
 		}
 		switch msg.MsgType {
@@ -113,6 +113,10 @@ func constructConversationResponse(msgs []*model.ChatMessage) (*chat.GetConversa
 		}
 		res.Code = chttp.MESSAGE_SUCCESS
 		resp.Msgs = append(resp.Msgs, res)
+	}
+	// 再将msg倒序,方便前端处理
+	for i, j := 0, len(resp.Msgs)-1; i < j; i, j = i+1, j-1 {
+		resp.Msgs[i], resp.Msgs[j] = resp.Msgs[j], resp.Msgs[i]
 	}
 	return resp, nil
 }
