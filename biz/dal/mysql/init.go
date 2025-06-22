@@ -1,6 +1,9 @@
 package mysql
 
 import (
+	"context"
+	"core/biz/dal/model"
+	"core/biz/dal/query"
 	"core/conf"
 	"fmt"
 
@@ -25,6 +28,23 @@ func Init() {
 		},
 	)
 	if err != nil {
+		panic(err)
+	}
+
+}
+
+func CreatePublicGroup(ctx context.Context) {
+	num, err := query.Group.WithContext(ctx).Where(query.Group.GroupName.Eq("public")).Count()
+	if err != nil {
+		panic(err)
+	}
+	if num > 0 {
+		return
+	}
+	if err = query.Group.WithContext(ctx).Create(&model.Group{
+		GroupName: "public",
+		Desc:      "公共群组",
+	}); err != nil {
 		panic(err)
 	}
 }

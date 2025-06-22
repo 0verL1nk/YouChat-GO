@@ -3,9 +3,11 @@ package group
 import (
 	"context"
 
+	"core/biz/cerrors"
 	service "core/biz/service/group"
 	"core/biz/utils"
 	group "core/hertz_gen/group"
+
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 )
@@ -24,6 +26,10 @@ func CreateGroup(ctx context.Context, c *app.RequestContext) {
 	resp := &group.CreateGroupResp{}
 	resp, err = service.NewCreateGroupService(ctx, c).Run(&req)
 	if err != nil {
+		if cerrors.Is(err, cerrors.ErrGroupNameExist) {
+			utils.SendErrResponse(ctx, c, consts.StatusBadRequest, err)
+			return
+		}
 		utils.SendErrResponse(ctx, c, consts.StatusInternalServerError, err)
 		return
 	}

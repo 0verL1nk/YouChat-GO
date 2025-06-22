@@ -14,6 +14,7 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/google/uuid"
 )
 
 var (
@@ -49,6 +50,10 @@ func (h *RegisterService) Run(req *auth.RegisterReq) (resp *auth.RegisterResp, e
 		hlog.Error("check user state failed:", err)
 		return &auth.RegisterResp{}, err
 	}
+	// 校验用户信息
+	if err = userValidator(h.Context, req.Email, req.Password, req.NickName); err != nil {
+		return &auth.RegisterResp{}, err
+	}
 	pwd, err := utils.HashAndSalt(req.Password)
 	if err != nil {
 		hlog.Error("hash password failed:", err)
@@ -64,5 +69,54 @@ func (h *RegisterService) Run(req *auth.RegisterReq) (resp *auth.RegisterResp, e
 		hlog.Error("create user failed:", err)
 		return &auth.RegisterResp{}, cerrors.ErrUserCreate
 	}
+	// 加入公共群聊
+	if err = JoinPublicGroup(h.Context, user.ID); err != nil {
+		hlog.Error("join public group failed:", err)
+	}
 	return &auth.RegisterResp{Info: "Success"}, nil
+}
+
+func JoinPublicGroup(ctx context.Context, userID uuid.UUID) (err error) {
+	groupID, err := query.Group.WithContext(ctx).Where(query.Group.GroupName.Eq("public")).First()
+	if err != nil {
+		hlog.Error("get public group failed:", err)
+		return err
+	}
+	if _, err = query.GroupMember.WithContext(ctx).
+		Where(query.GroupMember.UserID.Eq(userID),
+			query.GroupMember.GroupID.Eq(groupID.ID),
+			query.GroupMember.GroupType.Eq(uint8(model.GroupTypePublic))).
+		FirstOrCreate(); err != nil {
+		hlog.Error("join public group failed:", err)
+		return err
+	}
+	return nil
+}
+
+func userValidator(ctx context.Context, email, password, nickName string) (err error) {
+	if email == "" {
+		return cerrors.ErrEmailEmpty
+	}
+	if password == "" {
+		return cerrors.ErrPasswordEmpty
+	}
+	if !utils.IsValidEmail(email) {
+		return cerrors.ErrEmailFormat
+	}
+	if len(password) < 6 || len(password) > 20 {
+		return cerrors.ErrPasswordLength
+	}
+	if nickName == "" {
+		return cerrors.ErrNickNameEmpty
+	}
+	// 确认昵称是否存在
+	num, err := query.Q.User.WithContext(ctx).Where(query.User.Name.Eq(nickName)).Count()
+	if err != nil {
+		hlog.Error("check nickname exist failed:", err)
+		return err
+	}
+	if num > 0 {
+		return cerrors.ErrUserAlreadyExist
+	}
+	return nil
 }

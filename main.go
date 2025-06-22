@@ -30,6 +30,8 @@ func main() {
 	dal.Init()
 	// use `go run cmd/gorm_gen/main.go` to generate the code
 	query.SetDefault(mysql.DB)
+	// 初始化公共群组
+	mysql.CreatePublicGroup(context.Background())
 	address := conf.GetConf().Hertz.Address
 	hlog.Info("address:port ", address)
 	h := server.New(server.WithHostPorts(address))

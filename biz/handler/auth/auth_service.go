@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 
+	"core/biz/cerrors"
 	service "core/biz/service/auth"
 	"core/biz/utils"
 	auth "core/hertz_gen/auth"
@@ -25,6 +26,10 @@ func Register(ctx context.Context, c *app.RequestContext) {
 	resp := &auth.RegisterResp{}
 	resp, err = service.NewRegisterService(ctx, c).Run(&req)
 	if err != nil {
+		if cerrors.Is(err, cerrors.BaseErrBadReq) {
+			utils.SendErrResponse(ctx, c, consts.StatusBadRequest, err)
+			return
+		}
 		utils.SendErrResponse(ctx, c, consts.StatusInternalServerError, err)
 		return
 	}

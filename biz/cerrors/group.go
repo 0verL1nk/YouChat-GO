@@ -6,4 +6,5 @@ var (
 	ErrGroupNotFound      = errors.New("group not found")
 	ErrGroupProhibit      = errors.New("group prohibit operation")
 	ErrGroupAlreadyMember = errors.New("user already in group")
+	ErrGroupNameExist     = errors.New("group name already exist")
 )

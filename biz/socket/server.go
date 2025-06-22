@@ -9,6 +9,7 @@ import (
 	mq_producer "core/biz/service/mq/producer"
 	chat "core/hertz_gen/chat"
 	"errors"
+	"html"
 	"sync"
 
 	"github.com/cloudwego/hertz/pkg/common/hlog"
@@ -109,6 +110,8 @@ func (s *Server) Start() {
 					{
 						cid := msg.Id
 						msg.Id = uuid.NewString()
+						// 防止XSS漏洞
+						MsgTextSafeConverter(&msg)
 						// go SaveTextMsg(&msg)
 						go mq_producer.HandlerWSMessage(&msg)
 						// 将单聊视为两个人的房间
@@ -159,6 +162,20 @@ func updateMsgID(userID string, msgID string, cid string) (err error) {
 	userClient.SafeSend(msg)
 	hlog.Debug("updateMsgID end")
 	return
+}
+
+func MsgTextSafeConverter(msg *chat.ChatMsg) {
+	if msg == nil {
+		return
+	}
+	if msg.Type != int32(model.MsgTypeText) {
+		return
+	}
+	textMsg := msg.GetText()
+	content := &chat.ChatMsg_Text{
+		Text: html.EscapeString(textMsg),
+	}
+	msg.Content = content
 }
 
 func SendTextMsg(msg *chat.ChatMsg) (err error) {

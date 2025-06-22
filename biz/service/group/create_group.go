@@ -3,6 +3,7 @@ package group
 import (
 	"context"
 
+	"core/biz/cerrors"
 	"core/biz/dal/model"
 	"core/biz/dal/query"
 	"core/biz/service/user"
@@ -41,6 +42,14 @@ func (h *CreateGroupService) Run(req *group.CreateGroupReq) (resp *group.CreateG
 		hlog.Debugf("err check user exist:%v", err)
 		return nil, err
 	}
+	// 检查名字是否重复
+	num, err := query.Group.WithContext(h.Context).Where(query.Group.GroupName.Eq(req.Name)).Count()
+	if err != nil {
+		return nil, err
+	}
+	if num > 0 {
+		return nil, cerrors.ErrGroupNameExist
+	}
 	// 创建group
 	groupID := uuid.New()
 	if err = query.Group.WithContext(h.Context).Create(&model.Group{
@@ -63,7 +72,6 @@ func (h *CreateGroupService) Run(req *group.CreateGroupReq) (resp *group.CreateG
 		hlog.Errorf("err create group member: %v", err)
 		return nil, err
 	}
-
 	resp = &group.CreateGroupResp{
 		GroupID: groupID.String(),
 	}

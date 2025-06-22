@@ -3,6 +3,7 @@ package utils
 import (
 	"core/biz/cerrors"
 	"core/biz/jwt"
+	"regexp"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/cloudwego/hertz/pkg/app"
@@ -29,4 +30,10 @@ func GetTokenFromMiddleware(c *app.RequestContext) (*jwt.TokenClaims, error) {
 		return nil, cerrors.ErrAssertTokenClaims
 	}
 	return token, nil
+}
+
+func VerifyEmailFormat(email string) bool {
+	pattern := `\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*` //匹配电子邮箱
+	reg := regexp.MustCompile(pattern)
+	return reg.MatchString(email)
 }
