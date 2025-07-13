@@ -11,7 +11,7 @@ RUN go mod download -x
 
 # 复制全部源代码
 COPY . .
-RUN cp conf/conf.example.yaml conf.yaml
+RUN cp conf/conf.example.yaml conf/conf.yaml
 # 构建可执行文件
 RUN go build -o server . && \
     go build -o mingrate ./cmd/gorm/main.go
