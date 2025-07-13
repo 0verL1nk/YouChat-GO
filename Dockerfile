@@ -25,7 +25,7 @@ COPY --from=builder /app/server .
 COPY --from=builder /app/mingrate .
 
 # 拷贝配置文件模板
-COPY /conf/config.example.yaml ./config.yaml
+COPY ./conf/config.example.yaml ./config.yaml
 
 
 # 时区环境变量
