@@ -19,7 +19,7 @@ registry:
 # MySQL Database Configuration
 mysql:
   host: "mysql"
-  port: "5432"
+  port: "3306"
   username: "gorm"
   password: "gorm"
   database: "test"
