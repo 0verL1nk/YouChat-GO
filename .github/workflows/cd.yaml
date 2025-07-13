@@ -23,6 +23,8 @@ jobs:
         with:
           ref: ${{ github.event.inputs.branch || github.ref_name }}
       - name: Docker compose up
+        env:
+          DOCKER_BUILDKIT: 1
         run: |
           docker-compose down
           docker-compose up -d --build
