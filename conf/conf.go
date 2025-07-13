@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 	"gopkg.in/validator.v2"
 )
-
+// 注意这个embed,会编译进文件
 var (
 	//go:embed conf.yaml
 	configFile []byte
