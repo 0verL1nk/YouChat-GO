@@ -9,7 +9,7 @@ RUN go mod download -x
 
 # 复制全部源代码（包含 conf.yaml 或 conf.example.yaml）
 COPY . .
-
+COPY ./conf/conf.example.yaml ./conf.yaml
 # 构建二进制
 ARG TARGETARCH
 RUN CGO_ENABLED=0 GOARCH=$TARGETARCH go build -o /bin/server .
@@ -34,7 +34,7 @@ USER appuser
 # Copy the executable from the "build" stage.
 COPY --from=build /bin/server /bin/
 COPY --from=build /bin/migrator /bin/
-COPY --from=build /src/conf/conf.example.yaml /bin/config.yaml
+
 # Expose the port that the application listens on.
 EXPOSE 8080
 
