@@ -1,0 +1,28 @@
+name: Continuous Deployment
+
+on:
+  push:
+   branches:
+    - main
+  
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main'
+        type: string
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    environment: development
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref_name }}
+      - name: Docker compose up
+        run: |
+          docker-compose down
+          docker-compose up -d --build
