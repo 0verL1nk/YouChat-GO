@@ -16,6 +16,7 @@ services:
       kafka:
         condition: service_healthy
     volumes:
+      - ./conf/config.yaml:/bin/config.yaml
       - ./logs:/bin/logs
 
   mysql:
