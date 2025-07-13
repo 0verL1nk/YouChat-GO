@@ -11,7 +11,7 @@ RUN go mod download -x
 
 # 复制全部源代码
 COPY . .
-COPY ./conf/conf.example.yaml ./config.yaml
+COPY ./conf/conf.example.yaml /app/conf.yaml
 # 构建可执行文件
 RUN go build -o server . && \
     go build -o mingrate ./cmd/gorm/main.go
@@ -25,7 +25,7 @@ COPY --from=builder /app/server .
 COPY --from=builder /app/mingrate .
 
 # 拷贝配置文件模板
-COPY ./conf/conf.example.yaml ./config.yaml
+COPY ./conf/conf.example.yaml ./conf.yaml
 
 
 # 时区环境变量
